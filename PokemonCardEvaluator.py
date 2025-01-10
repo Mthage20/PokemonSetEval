@@ -1,45 +1,27 @@
+import streamlit as st
 
-# Define a function to calculate the score
+# Function to calculate the score
 def calculate_score(cost, hit_value, pull_rate, pack_quantity, resale_liquidity, rarity_factor, variety):
-    # Calculate Expected Value (EV)
-    ev = hit_value * pull_rate
-    # Calculate the final score
-    score = ((ev * pack_quantity * resale_liquidity * rarity_factor) + variety) / cost
-    return score
+    ev = hit_value * pull_rate  # Calculate Expected Value
+    return ((ev * pack_quantity * resale_liquidity * rarity_factor) + variety) / cost
 
-# Data: Example Pokémon sets
-sets = [
-    {
-        "name": "Set A",
-        "cost": 120,
-        "hit_value": 50,
-        "pull_rate": 0.10,
-        "pack_quantity": 36,
-        "resale_liquidity": 0.9,
-        "rarity_factor": 1.1,
-        "variety": 5,
-    },
-    {
-        "name": "Set B",
-        "cost": 100,
-        "hit_value": 40,
-        "pull_rate": 0.08,
-        "pack_quantity": 30,
-        "resale_liquidity": 0.8,
-        "rarity_factor": 1.2,
-        "variety": 7,
-    },
-]
+# Streamlit app
+st.title("Pokémon Card Set Score Calculator")
+st.write("Use this tool to evaluate the value of different Pokémon card sets based on cost, hit value, pull rate, and more.")
 
-# Calculate and display scores for each set
-for set_data in sets:
-    score = calculate_score(
-        set_data["cost"],
-        set_data["hit_value"],
-        set_data["pull_rate"],
-        set_data["pack_quantity"],
-        set_data["resale_liquidity"],
-        set_data["rarity_factor"],
-        set_data["variety"],
-    )
-    print(f"Set: {set_data['name']}, Score: {score:.2f}")
+# Input fields for the variables
+cost = st.number_input("Cost (C): Total price of the set", value=120.0, min_value=0.0)
+hit_value = st.number_input("Hit Value (HV): Average value of key cards", value=50.0, min_value=0.0)
+pull_rate = st.number_input("Pull Rate (PR): Probability of pulling a key card (e.g., 0.1 for 1 in 10)", value=0.1, min_value=0.0, max_value=1.0)
+pack_quantity = st.number_input("Pack Quantity (PQ): Number of packs in the set", value=36, min_value=1)
+resale_liquidity = st.number_input("Resale Liquidity (RL): Likelihood of resale (0.0 to 1.0)", value=0.9, min_value=0.0, max_value=1.0)
+rarity_factor = st.number_input("Rarity Factor (RF): Multiplier for desirability", value=1.1, min_value=0.0)
+variety = st.number_input("Variety (V): Score for card diversity in the set", value=5.0, min_value=0.0)
+
+# Calculate and display the score when the button is clicked
+if st.button("Calculate Score"):
+    score = calculate_score(cost, hit_value, pull_rate, pack_quantity, resale_liquidity, rarity_factor, variety)
+    st.success(f"Calculated Score: {score:.2f}")
+else:
+    st.write("Fill out the inputs above and click 'Calculate Score' to evaluate.")
+
