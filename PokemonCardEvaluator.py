@@ -7,21 +7,24 @@ def calculate_score(cost, hit_value, pull_rate, pack_quantity, resale_liquidity,
 
 # Streamlit app
 st.title("Pokémon Card Set Score Calculator")
-st.write("Use this tool to evaluate the value of different Pokémon card sets based on cost, hit value, pull rate, and more.")
+st.write("Use the sliders and selectors below to input the data for your Pokémon card set.")
 
-# Input fields for the variables
-cost = st.number_input("Cost (C): Total price of the set", value=120.0, min_value=0.0)
-hit_value = st.number_input("Hit Value (HV): Average value of key cards", value=50.0, min_value=0.0)
-pull_rate = st.number_input("Pull Rate (PR): Probability of pulling a key card (e.g., 0.1 for 1 in 10)", value=0.1, min_value=0.0, max_value=1.0)
-pack_quantity = st.number_input("Pack Quantity (PQ): Number of packs in the set", value=36, min_value=1)
-resale_liquidity = st.number_input("Resale Liquidity (RL): Likelihood of resale (0.0 to 1.0)", value=0.9, min_value=0.0, max_value=1.0)
-rarity_factor = st.number_input("Rarity Factor (RF): Multiplier for desirability", value=1.1, min_value=0.0)
-variety = st.number_input("Variety (V): Score for card diversity in the set", value=5.0, min_value=0.0)
+# Input fields for the variables using sliders and selectors
+st.header("Set Inputs")
+cost = st.slider("Cost (C): Total price of the set ($)", min_value=10, max_value=1000, value=120, step=10)
+hit_value = st.slider("Hit Value (HV): Average value of key cards ($)", min_value=1, max_value=500, value=50, step=1)
+pull_rate = st.slider("Pull Rate (PR): Probability of pulling a key card", min_value=0.01, max_value=1.0, value=0.1, step=0.01)
+pack_quantity = st.slider("Pack Quantity (PQ): Number of packs in the set", min_value=1, max_value=100, value=36, step=1)
+resale_liquidity = st.slider("Resale Liquidity (RL): Likelihood of resale", min_value=0.0, max_value=1.0, value=0.9, step=0.05)
+rarity_factor = st.slider("Rarity Factor (RF): Multiplier for desirability", min_value=0.5, max_value=3.0, value=1.1, step=0.1)
+variety = st.slider("Variety (V): Score for card diversity", min_value=0, max_value=20, value=5, step=1)
 
 # Calculate and display the score when the button is clicked
 if st.button("Calculate Score"):
     score = calculate_score(cost, hit_value, pull_rate, pack_quantity, resale_liquidity, rarity_factor, variety)
     st.success(f"Calculated Score: {score:.2f}")
-else:
-    st.write("Fill out the inputs above and click 'Calculate Score' to evaluate.")
 
+# Optional: Show all input values for verification
+st.subheader("Input Summary")
+st.write(f"Cost: ${cost}, Hit Value: ${hit_value}, Pull Rate: {pull_rate}, Packs: {pack_quantity}")
+st.write(f"Resale Liquidity: {resale_liquidity}, Rarity Factor: {rarity_factor}, Variety: {variety}")
