@@ -62,26 +62,26 @@ def load_card_data():
 
 def calculate_final_scores(card_data):
     # Ensure numeric stability
-    for col in ['Total Value', 'Avg Value', 'Value Std Dev']:
+    for col in ['Total_Value', 'Avg_Value', 'Value_Std_Dev']:
         card_data[col] = card_data[col].fillna(0)
     
     # Weighted calculations with validation
     card_data['Highest Potential Value'] = (
-        (card_data['Total Value'] * 0.40) + 
-        (card_data['Avg Value'] * 0.30) + 
-        (card_data['Value Std Dev'] * 0.30)
+        (card_data['Total_Value'] * 0.40) + 
+        (card_data['Avg_Value'] * 0.30) + 
+        (card_data['Value_Std_Dev'] * 0.30)
     ).round(2)
     
     card_data['Safest Set to Rip'] = (
-        (card_data['Value Std Dev'] * 0.50) + 
-        (card_data['Avg Value'] * 0.30) + 
-        (card_data['Total Value'] * 0.20)
+        (card_data['Value_Std_Dev'] * 0.50) + 
+        (card_data['Avg_Value'] * 0.30) + 
+        (card_data['Total_Value'] * 0.20)
     ).round(2)
     
     card_data['Best Balanced Set'] = (
-        (card_data['Total Value'] * 0.30) + 
-        (card_data['Avg Value'] * 0.30) + 
-        (card_data['Value Std Dev'] * 0.40)
+        (card_data['Total_Value'] * 0.30) + 
+        (card_data['Avg_Value'] * 0.30) + 
+        (card_data['Value_Std_Dev'] * 0.40)
     ).round(2)
     
     return card_data
@@ -99,8 +99,34 @@ def main():
         st.write("Processed Data:", card_data)
         st.write("Numeric Columns Summary:", card_data.describe())
 
-    # Rest of your existing display code...
-    # [Keep the leaderboards and comparison sections unchanged from previous version]
+    # Leaderboards
+    st.header("Leaderboards")
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.subheader("Highest Potential Value")
+        st.dataframe(
+            card_data[['Set Name', 'Highest Potential Value']]
+            .sort_values('Highest Potential Value', ascending=False)
+            .reset_index(drop=True)
+        )
+    
+    with col2:
+        st.subheader("Safest Set to Rip")
+        st.dataframe(
+            card_data[['Set Name', 'Safest Set to Rip']]
+            .sort_values('Safest Set to Rip', ascending=False)
+            .reset_index(drop=True)
+        )
+    
+    with col3:
+        st.subheader("Best Balanced Set")
+        st.dataframe(
+            card_data[['Set Name', 'Best Balanced Set']]
+            .sort_values('Best Balanced Set', ascending=False)
+            .reset_index(drop=True)
+        )
 
 if __name__ == "__main__":
     main()
