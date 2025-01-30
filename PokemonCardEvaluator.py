@@ -143,16 +143,28 @@ def main():
     )
     
     if selected_sets:
-        compare_data = filtered_data[filtered_data['Set Name'].isin(selected_sets)]
+        compare_data = filtered_data[filtered_data['Set Name'].isin(selected_sets)].copy()
+        
+        # Calculate ranks for each category
+        compare_data['Highest Potential Value Rank'] = compare_data['Highest Potential Value'].rank(ascending=False, method='min').astype(int)
+        compare_data['Safest Set to Rip Rank'] = compare_data['Safest Set to Rip'].rank(ascending=False, method='min').astype(int)
+        compare_data['Best Balanced Set Rank'] = compare_data['Best Balanced Set'].rank(ascending=False, method='min').astype(int)
+        
+        # Display comparison table with ranks and standard deviation
         st.dataframe(
-            compare_data[['Set Name', 'Total_Cards', 'Avg_Value', 'Total_Value', 
-                        'Highest Potential Value', 'Safest Set to Rip', 
-                        'Best Balanced Set']],
+            compare_data[['Set Name', 'Total_Cards', 'Avg_Value', 'Value_Std_Dev', 'Total_Value', 
+                        'Highest Potential Value', 'Highest Potential Value Rank',
+                        'Safest Set to Rip', 'Safest Set to Rip Rank',
+                        'Best Balanced Set', 'Best Balanced Set Rank']],
             use_container_width=True,
             column_config={
                 "Total_Cards": "Cards in Set",
                 "Avg_Value": st.column_config.NumberColumn("Avg Card Value", format="$%.2f"),
+                "Value_Std_Dev": st.column_config.NumberColumn("Std Dev", format="$%.2f"),
                 "Total_Value": st.column_config.NumberColumn("Total Set Value", format="$%.2f"),
+                "Highest Potential Value": st.column_config.NumberColumn("Highest Potential Value", format="$%.2f"),
+                "Safest Set to Rip": st.column_config.NumberColumn("Safest Set to Rip", format="$%.2f"),
+                "Best Balanced Set": st.column_config.NumberColumn("Best Balanced Set", format="$%.2f"),
             }
         )
 
