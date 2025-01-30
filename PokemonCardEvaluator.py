@@ -40,8 +40,17 @@ def load_card_data():
     
     return grouped
 
+def calculate_final_scores(card_data):
+    # Calculate final scores for each category
+    card_data['Highest Potential Value'] = (card_data['Total Value'] * 0.40) + (card_data['Avg Value'] * 0.30) + (card_data['Value Std Dev'] * 0.30)
+    card_data['Safest Set to Rip'] = (card_data['Value Std Dev'] * 0.50) + (card_data['Avg Value'] * 0.30) + (card_data['Total Value'] * 0.20)
+    card_data['Best Balanced Set'] = (card_data['Total Value'] * 0.30) + (card_data['Avg Value'] * 0.30) + (card_data['Value Std Dev'] * 0.40)
+    
+    return card_data
+
 def main():
     card_data = load_card_data()
+    card_data = calculate_final_scores(card_data)
     
     st.title("Pokémon Card Set Analyzer")
     st.write("Compare Pokémon card sets based on market data")
@@ -64,11 +73,12 @@ def main():
             # Create metrics table
             comparison_table = comparison_data[[
                 'Set Name', 'Release Year', 'Total Cards',
-                'Avg Value', 'Value Std Dev', 'Total Value'
+                'Avg Value', 'Value Std Dev', 'Total Value',
+                'Highest Potential Value', 'Safest Set to Rip', 'Best Balanced Set'
             ]].copy()
             
             # Format currency columns
-            currency_cols = ['Avg Value', 'Value Std Dev', 'Total Value']
+            currency_cols = ['Avg Value', 'Value Std Dev', 'Total Value', 'Highest Potential Value', 'Safest Set to Rip', 'Best Balanced Set']
             comparison_table[currency_cols] = comparison_table[currency_cols].applymap(
                 lambda x: f"${x:,.2f}" if pd.notnull(x) else "N/A"
             )
@@ -82,7 +92,10 @@ def main():
                     "Total Cards": "Total Cards",
                     "Avg Value": "Average Value",
                     "Value Std Dev": "Value Std Dev",
-                    "Total Value": "Total Set Value"
+                    "Total Value": "Total Set Value",
+                    "Highest Potential Value": "Highest Potential Value",
+                    "Safest Set to Rip": "Safest Set to Rip",
+                    "Best Balanced Set": "Best Balanced Set"
                 }
             )
             
@@ -101,6 +114,9 @@ def main():
                     st.metric("Average Value", f"${row['Avg Value']:,.2f}")
                     st.metric("Value Std Dev", f"${row['Value Std Dev']:,.2f}")
                     st.metric("Total Set Value", f"${row['Total Value']:,.2f}")
+                    st.metric("Highest Potential Value", f"${row['Highest Potential Value']:,.2f}")
+                    st.metric("Safest Set to Rip", f"${row['Safest Set to Rip']:,.2f}")
+                    st.metric("Best Balanced Set", f"${row['Best Balanced Set']:,.2f}")
 
         else:
             st.warning("Please select at least one set to compare")
