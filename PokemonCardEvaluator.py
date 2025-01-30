@@ -11,8 +11,13 @@ def load_card_data():
         df = pd.read_csv("pricecharting_data_20250129.csv")
         st.write("✅ CSV Loaded Successfully")
 
-        # Check available columns
-        st.write("Columns in dataset:", df.columns.tolist())
+        # Check if dataframe is empty
+        if df.empty:
+            st.error("❌ CSV file is empty! Please check the file.")
+            return pd.DataFrame()
+
+        # Show the first few rows to debug
+        st.write("📂 Raw CSV Data Preview:", df.head())
 
         # Define price columns
         price_columns = [
@@ -61,6 +66,7 @@ def load_card_data():
             'Release_Year': 'Release Year'
         })
 
+        # Show processed data
         st.write("📊 Aggregated Data Preview:", grouped.head())
 
         return grouped
@@ -91,12 +97,15 @@ def calculate_final_scores(card_data):
         (card_data['Value Std Dev'] * 0.40)
     )
 
-    # Check for NaN values in the leaderboard calculations
-    st.write("📈 Score Calculation Stats:", card_data.describe())
+    # Check for NaN values in calculations
+    st.write("📈 Score Calculation Debug:", card_data.describe())
 
     return card_data
 
 def main():
+    st.title("Pokémon Card Set Analyzer")
+    st.write("Compare Pokémon card sets based on market data")
+
     card_data = load_card_data()
 
     # Ensure data is not empty before calculations
@@ -106,20 +115,18 @@ def main():
 
     card_data = calculate_final_scores(card_data)
 
-    st.title("Pokémon Card Set Analyzer")
-    st.write("Compare Pokémon card sets based on market data")
+    # Force display of full data
+    st.subheader("📜 Full Processed Data")
+    st.dataframe(card_data, use_container_width=True)
 
     if not card_data.empty:
         # Leaderboards Section
-        st.subheader("Set Leaderboards")
-        
-        # Debugging: Check sorted values
-        st.write("🔍 Debug: Highest Potential Value Ranking Preview", card_data[['Set Name', 'Highest Potential Value']].sort_values('Highest Potential Value', ascending=False).head(5))
+        st.subheader("🏆 Set Leaderboards")
 
         col1, col2, col3 = st.columns(3)
 
         with col1:
-            st.markdown("**🏆 Highest Potential Value**")
+            st.markdown("**💰 Highest Potential Value**")
             high_potential = card_data.sort_values('Highest Potential Value', ascending=False).head(10)
             st.dataframe(high_potential[['Set Name', 'Highest Potential Value', 'Avg Value', 'Total Value']], use_container_width=True)
 
@@ -132,6 +139,9 @@ def main():
             st.markdown("**⚖️ Best Balanced Set**")
             balanced = card_data.sort_values('Best Balanced Set', ascending=False).head(10)
             st.dataframe(balanced[['Set Name', 'Best Balanced Set', 'Total Value', 'Avg Value']], use_container_width=True)
+
+        # Debugging: Check if leaderboard tables are actually sorted correctly
+        st.write("🔍 Debug: Highest Potential Value Ranking Preview", card_data[['Set Name', 'Highest Potential Value']].sort_values('Highest Potential Value', ascending=False).head(5))
 
         # Comparison Section
         st.divider()
