@@ -6,11 +6,13 @@ import os
 st.set_page_config(page_title="Pokémon Card Calculator", layout="wide")
 
 # Load and process the Pokémon card data
+# ... (previous imports and setup remain the same)
+
 def load_card_data():
-    # Load the CSV data (replace with your actual CSV loading logic)
+    # Load the CSV data
     df = pd.read_csv("pricecharting_data_20250129.csv")
     
-    # Clean price columns
+    # Clean price columns (unchanged)
     price_columns = [
         "loose-price", "cib-price", "new-price", "graded-price",
         "box-only-price", "manual-only-price", "bgs-10-price",
@@ -20,11 +22,14 @@ def load_card_data():
     for col in price_columns:
         df[col] = df[col].replace('[\$,]', '', regex=True).astype(float)
     
+    # Handle date conversion errors and drop invalid rows
+    df['release-date'] = pd.to_datetime(df['release-date'], errors='coerce')
+    df = df.dropna(subset=['release-date'])  # Remove rows with invalid dates
+    
     # Extract release year
-    df['release-date'] = pd.to_datetime(df['release-date'])
     df['Release Year'] = df['release-date'].dt.year
     
-    # Group by set and calculate metrics
+    # Group by set and calculate metrics (unchanged)
     grouped = df.groupby('console-name').agg({
         'product-name': 'count',
         'new-price': 'mean',
@@ -34,6 +39,8 @@ def load_card_data():
     grouped.columns = ['Set Name', 'Total Cards', 'Avg Rare Value', 'Release Year']
     
     return grouped
+
+# ... (rest of the code remains the same)
 
 # Main application
 def main():
