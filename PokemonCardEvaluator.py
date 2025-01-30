@@ -75,26 +75,6 @@ if page == "Pokémon Card Set Calculator":
             st.write("### Pricecharting Data for Selected Set")
             st.dataframe(filtered_data)
 
-# **Enter Pokémon Set Data Page**
-elif page == "Enter Pokémon Set Data":
-    st.title("Enter Pokémon Set Data")
 
-    # Form for Data Entry
-    with st.form("set_data"):
-        set_name = st.text_input("Set Name", "")
-        release_year = st.number_input("Release Year", min_value=1996, max_value=2025, value=2024, step=1)
-        total_cards = st.number_input("Total Cards in Set", min_value=1, max_value=1000, value=200, step=1)
-        rare_card_value = st.number_input("Avg Value of Rare Cards ($)", min_value=0.0, value=10.0, step=0.01)
-
-        # Option to select a set from Pricecharting data
-        st.write("### Select a Set from Pricecharting Data")
-        set_options = pricecharting_data['console-name'].unique()
-        selected_set = st.selectbox("Select a Set", set_options)
-
-        submit_button = st.form_submit_button("Save Data")
-
-    # Save data when the form is submitted
-    if submit_button:
-        save_set(set_name, release_year, total_cards, rare_card_value)
-        st.success(f"Saved Data for {set_name} (Released: {release_year})")
+ 
 
