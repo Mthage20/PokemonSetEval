@@ -5,9 +5,7 @@ st.set_page_config(page_title="Pokémon Card Calculator", layout="wide")
 st.title("Pokémon Card Set Score Calculator")
 st.write("Evaluate Pokémon card sets based on cost, pull rates, and other metrics.")
 
-st.sidebar.page_link("pages/data_entry.py", label="📊 Go to Data Entry")
-
-# Main Page Content
+# Input fields
 st.header("Set Inputs")
 cost = st.slider("Cost (C): Total price of the set ($)", min_value=10, max_value=1000, value=120, step=10)
 hit_value = st.slider("Hit Value (HV): Average value of rare cards ($)", min_value=1, max_value=500, value=50, step=1)
