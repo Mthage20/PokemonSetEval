@@ -19,8 +19,8 @@ def load_card_data():
         st.error("CSV is missing required columns. Please ensure the file contains: 'console-name', 'new-price', 'product-name', 'release-date'.")
         raise FileNotFoundError
     
-    # Infer language from product names
-    df['Language'] = df['product-name'].apply(
+    # Infer language from set names (console-name)
+    df['Language'] = df['console-name'].apply(
         lambda x: 'Japanese' if 'Japanese' in str(x) else 'English'
     )
     
