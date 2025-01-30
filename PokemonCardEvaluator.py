@@ -1,169 +1,41 @@
 import streamlit as st
-import pandas as pd
+import plotly.express as px
 
-# Set page configuration
-st.set_page_config(page_title="Pokémon Set Analyzer", layout="wide")
+st.header("🏆 Set Leaderboards")
 
-def load_card_data():
-    try:
-        # Attempt to load user's CSV with multiple encoding attempts
-        try:
-            df = pd.read_csv("pricecharting_data_20250129.csv")
-        except UnicodeDecodeError:
-            df = pd.read_csv("pricecharting_data_20250129.csv", encoding='latin1')
-            
-        # Validate required columns
-        required_columns = ['console-name', 'new-price', 'product-name', 'release-date']
-        if not all(col in df.columns for col in required_columns):
-            st.error("CSV is missing required columns. Using sample data.")
-            raise FileNotFoundError
-            
-    except FileNotFoundError:
-        # Generate realistic sample data
-        st.warning("Using sample data. Upload your CSV for accurate results.")
-        sample_data = {
-            'console-name': ['Base Set', 'Jungle', 'Fossil', 'Base Set 2', 'Team Rocket'],
-            'new-price': [450.50, 120.30, 95.80, 380.00, 75.40],
-            'product-name': ['Charizard', 'Pikachu', 'Blastoise', 'Venusaur', 'Dark Charizard'],
-            'release-date': ['1999-01-01', '1999-06-01', '2000-01-01', '2000-05-01', '2001-03-15'],
-            'loose-price': [320.00, 80.50, 65.30, 275.00, 50.20],
-            'graded-price': [1200.00, 450.00, 680.00, 950.00, 350.00]
-        }
-        df = pd.DataFrame(sample_data)
-    
-    # Enhanced price cleaning with debug
-    price_columns = [col for col in df.columns if '-price' in col]
-    
-    for col in price_columns:
-        if df[col].dtype == 'object':
-            # Remove all non-numeric characters except decimals
-            df[col] = df[col].astype(str).str.replace(r'[^\d.]', '', regex=True)
-        df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
-    
-    # Date handling with validation
-    df['release-date'] = pd.to_datetime(df['release-date'], errors='coerce')
-    df = df[df['release-date'].notna()]  # Filter out invalid dates
-    df['Release Year'] = df['release-date'].dt.year
-    
-    # Group with enhanced aggregation
-    grouped = df.groupby('console-name').agg(
-        Total_Cards=('product-name', 'count'),
-        Avg_Value=('new-price', lambda x: round(x.mean(), 2)),
-        Value_Std_Dev=('new-price', lambda x: round(x.std(), 2)),
-        Total_Value=('new-price', 'sum'),
-        Release_Year=('Release Year', 'first')
-    ).reset_index()
-    
-    return grouped.rename(columns={'console-name': 'Set Name'})
+# Column layout for leaderboards
+col1, col2, col3 = st.columns(3)
 
-def calculate_final_scores(card_data):
-    # Ensure numeric stability
-    for col in ['Total_Value', 'Avg_Value', 'Value_Std_Dev']:
-        card_data[col] = card_data[col].fillna(0)
+# Leaderboard 1: Highest Potential Value
+with col1:
+    st.subheader("💰 Highest Potential Value")
+    top_highest = card_data.sort_values('Highest Potential Value', ascending=False).head(10)
+    st.dataframe(top_highest[['Set Name', 'Highest Potential Value', 'Avg Value', 'Total Value']])
     
-    # Weighted calculations with validation
-    card_data['Highest Potential Value'] = (
-        (card_data['Total_Value'] * 0.40) + 
-        (card_data['Avg_Value'] * 0.30) + 
-        (card_data['Value_Std_Dev'] * 0.30)
-    ).round(2)
-    
-    card_data['Safest Set to Rip'] = (
-        (card_data['Value_Std_Dev'] * 0.50) + 
-        (card_data['Avg_Value'] * 0.30) + 
-        (card_data['Total_Value'] * 0.20)
-    ).round(2)
-    
-    card_data['Best Balanced Set'] = (
-        (card_data['Total_Value'] * 0.30) + 
-        (card_data['Avg_Value'] * 0.30) + 
-        (card_data['Value_Std_Dev'] * 0.40)
-    ).round(2)
-    
-    return card_data
+    # Add a bar chart for better visualization
+    fig1 = px.bar(top_highest, x='Set Name', y='Highest Potential Value', title="Highest Potential Value Ranking",
+                  text='Highest Potential Value', color='Highest Potential Value', color_continuous_scale="Blues")
+    fig1.update_layout(xaxis={'categoryorder':'total descending'})
+    st.plotly_chart(fig1, use_container_width=True)
 
-def main():
-    # Load and process data
-    if 'card_data' not in st.session_state:
-        st.session_state.card_data = load_card_data()
-        st.session_state.card_data = calculate_final_scores(st.session_state.card_data)
-    
-    card_data = st.session_state.card_data
+# Leaderboard 2: Safest Set to Rip
+with col2:
+    st.subheader("🛡️ Safest Set to Rip")
+    top_safest = card_data.sort_values('Safest Set to Rip', ascending=False).head(10)
+    st.dataframe(top_safest[['Set Name', 'Safest Set to Rip', 'Value Std Dev', 'Avg Value']])
 
-    # Title and description
-    st.title("💰 Pokémon Set Value Analyzer")
-    st.markdown("Compare Pokémon card set investment potential based on market data")
-    
-    # Leaderboards
-    st.header("📈 Investment Leaderboards")
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.subheader("🔥 Highest Potential Value")
-        top_hpv = card_data.sort_values('Highest Potential Value', ascending=False).iloc[0]
-        st.metric(
-            label=f"Top Set: **{top_hpv['Set Name']}**",
-            value=f"${top_hpv['Highest Potential Value']:,.2f}",
-            help=f"Total Value: ${top_hpv['Total_Value']:,.2f} | Avg Card Value: ${top_hpv['Avg_Value']:,.2f}"
-        )
-        st.bar_chart(
-            card_data.set_index('Set Name')['Highest Potential Value'].head(5),
-            use_container_width=True
-        )
-        st.caption("Best for high-risk, high-reward investors. Focuses on total value and growth potential.")
-    
-    with col2:
-        st.subheader("🛡️ Safest Set to Rip")
-        top_safe = card_data.sort_values('Safest Set to Rip', ascending=False).iloc[0]
-        st.metric(
-            label=f"Top Set: **{top_safe['Set Name']}**",
-            value=f"${top_safe['Safest Set to Rip']:,.2f}",
-            help=f"Total Value: ${top_safe['Total_Value']:,.2f} | Avg Card Value: ${top_safe['Avg_Value']:,.2f}"
-        )
-        st.bar_chart(
-            card_data.set_index('Set Name')['Safest Set to Rip'].head(5),
-            use_container_width=True
-        )
-        st.caption("Best for low-risk investors. Focuses on stability and consistent value.")
-    
-    with col3:
-        st.subheader("⚖️ Best Balanced Set")
-        top_balanced = card_data.sort_values('Best Balanced Set', ascending=False).iloc[0]
-        st.metric(
-            label=f"Top Set: **{top_balanced['Set Name']}**",
-            value=f"${top_balanced['Best Balanced Set']:,.2f}",
-            help=f"Total Value: ${top_balanced['Total_Value']:,.2f} | Avg Card Value: ${top_balanced['Avg_Value']:,.2f}"
-        )
-        st.bar_chart(
-            card_data.set_index('Set Name')['Best Balanced Set'].head(5),
-            use_container_width=True
-        )
-        st.caption("Best for balanced investors. Combines growth potential and stability.")
+    fig2 = px.bar(top_safest, x='Set Name', y='Safest Set to Rip', title="Safest Set to Rip Ranking",
+                  text='Safest Set to Rip', color='Safest Set to Rip', color_continuous_scale="Greens")
+    fig2.update_layout(xaxis={'categoryorder':'total descending'})
+    st.plotly_chart(fig2, use_container_width=True)
 
-    # Comparison tool
-    st.divider()
-    st.header("🔍 Set Comparison Tool")
-    
-    selected_sets = st.multiselect(
-        "Select sets to compare:", 
-        card_data['Set Name'].unique(),
-        placeholder="Choose 2-5 sets"
-    )
-    
-    if selected_sets:
-        compare_data = card_data[card_data['Set Name'].isin(selected_sets)]
-        st.dataframe(
-            compare_data[['Set Name', 'Total_Cards', 'Avg_Value', 'Total_Value', 
-                        'Highest Potential Value', 'Safest Set to Rip', 
-                        'Best Balanced Set']],
-            use_container_width=True,
-            column_config={
-                "Total_Cards": "Cards in Set",
-                "Avg_Value": st.column_config.NumberColumn("Avg Card Value", format="$%.2f"),
-                "Total_Value": st.column_config.NumberColumn("Total Set Value", format="$%.2f"),
-            }
-        )
+# Leaderboard 3: Best Balanced Set
+with col3:
+    st.subheader("⚖️ Best Balanced Set")
+    top_balanced = card_data.sort_values('Best Balanced Set', ascending=False).head(10)
+    st.dataframe(top_balanced[['Set Name', 'Best Balanced Set', 'Total Value', 'Avg Value']])
 
-if __name__ == "__main__":
-    main()
+    fig3 = px.bar(top_balanced, x='Set Name', y='Best Balanced Set', title="Best Balanced Set Ranking",
+                  text='Best Balanced Set', color='Best Balanced Set', color_continuous_scale="Reds")
+    fig3.update_layout(xaxis={'categoryorder':'total descending'})
+    st.plotly_chart(fig3, use_container_width=True)
