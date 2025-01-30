@@ -6,13 +6,11 @@ import os
 st.set_page_config(page_title="Pokémon Card Calculator", layout="wide")
 
 # Load and process the Pokémon card data
-# ... (previous imports and setup remain the same)
-
 def load_card_data():
     # Load the CSV data
     df = pd.read_csv("pricecharting_data_20250129.csv")
     
-    # Clean price columns (unchanged)
+    # Clean price columns
     price_columns = [
         "loose-price", "cib-price", "new-price", "graded-price",
         "box-only-price", "manual-only-price", "bgs-10-price",
@@ -22,25 +20,26 @@ def load_card_data():
     for col in price_columns:
         df[col] = df[col].replace('[\$,]', '', regex=True).astype(float)
     
-    # Handle date conversion errors and drop invalid rows
+    # Handle date conversion
     df['release-date'] = pd.to_datetime(df['release-date'], errors='coerce')
-    df = df.dropna(subset=['release-date'])  # Remove rows with invalid dates
+    df = df.dropna(subset=['release-date'])
     
     # Extract release year
     df['Release Year'] = df['release-date'].dt.year
     
-    # Group by set and calculate metrics (unchanged)
+    # Group by set and calculate metrics with additional stats
     grouped = df.groupby('console-name').agg({
         'product-name': 'count',
-        'new-price': 'mean',
+        'new-price': ['mean', 'std', 'sum'],
         'Release Year': 'first'
     }).reset_index()
     
-    grouped.columns = ['Set Name', 'Total Cards', 'Avg Rare Value', 'Release Year']
+    # Flatten multi-index columns
+    grouped.columns = ['Set Name', 'Total Cards', 
+                      'Avg Rare Value', 'Value Std Dev', 'Total Set Value',
+                      'Release Year']
     
     return grouped
-
-# ... (rest of the code remains the same)
 
 # Main application
 def main():
@@ -61,13 +60,17 @@ def main():
 
         st.divider()
         
-        # Display set info
-        col1, col2, col3 = st.columns(3)
+        # Display set info with new metrics
+        col1, col2, col3, col4, col5 = st.columns(5)
         with col1:
-            st.metric("Total Cards in Set", selected_set['Total Cards'])
+            st.metric("Total Cards", selected_set['Total Cards'])
         with col2:
-            st.metric("Average Card Value", f"${selected_set['Avg Rare Value']:,.2f}")
+            st.metric("Avg Value", f"${selected_set['Avg Rare Value']:,.2f}")
         with col3:
+            st.metric("Value Std Dev", f"${selected_set['Value Std Dev']:,.2f}")
+        with col4:
+            st.metric("Total Set Value", f"${selected_set['Total Set Value']:,.2f}")
+        with col5:
             st.metric("Release Year", selected_set['Release Year'])
 
         # Calculation inputs
@@ -79,9 +82,9 @@ def main():
                                        min_value=1, max_value=1000, 
                                        value=36, step=1)
 
-        # Calculation logic
+        # Updated calculation logic using Total Set Value
         if st.button("Calculate Potential Value"):
-            total_value = selected_set['Avg Rare Value'] * selected_set['Total Cards']
+            total_value = selected_set['Total Set Value']
             potential_return = (total_value * pack_quantity) - cost
             
             st.subheader("Results")
