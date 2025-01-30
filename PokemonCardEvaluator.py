@@ -35,6 +35,8 @@ def load_card_data():
         Category=('Category', 'first')
     ).reset_index()
     
+    grouped['Set Type'] = grouped['Total_Cards'].apply(lambda x: 'Niche' if x < 10 else 'Mainstream')
+    
     return grouped.rename(columns={'console-name': 'Set Name'})
 
 def calculate_final_scores(card_data):
@@ -69,7 +71,9 @@ def main():
     st.markdown("Compare Pokémon card set investment potential based on market data")
     
     set_category = st.radio("Select Set Type", ('Vintage', 'Modern'))
-    filtered_data = card_data[card_data['Category'] == set_category]
+    set_type = st.radio("Select Set Size", ('Mainstream', 'Niche'))
+    
+    filtered_data = card_data[(card_data['Category'] == set_category) & (card_data['Set Type'] == set_type)]
     
     st.header("📈 Investment Leaderboards")
     col1, col2, col3 = st.columns(3)
