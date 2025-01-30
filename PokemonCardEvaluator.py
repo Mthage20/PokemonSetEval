@@ -23,7 +23,7 @@ pack_quantity = st.slider("Pack Quantity (PQ): Number of packs in the set", min_
 # Manual/automatic (once I get my api key) input for card market values 
 st.header("Manual Input for Card Values")
 card_name = st.text_input("Enter Card Name (e.g., Pikachu VMAX)", "")
-card_value = st.number_input("Enter the Market Value of this Card ($)", min_value=0.0, value=hit_value, step=0.01)
+card_value = st.number_input("Enter the Market Value of this Card ($)", min_value=0.0, value=float(hit_value), step=0.01)
 
 
 # Calculate the score and total value when the button is clicked
