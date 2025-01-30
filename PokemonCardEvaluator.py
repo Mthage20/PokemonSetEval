@@ -5,7 +5,6 @@ import os
 # Set page configuration for the app
 st.set_page_config(page_title="Pokémon Card Calculator", layout="wide")
 
-# Load and process the Pokémon card data
 def load_card_data():
     # Load the CSV data
     df = pd.read_csv("pricecharting_data_20250129.csv")
@@ -27,78 +26,84 @@ def load_card_data():
     # Extract release year
     df['Release Year'] = df['release-date'].dt.year
     
-    # Group by set and calculate metrics with additional stats
+    # Group by set and calculate metrics
     grouped = df.groupby('console-name').agg({
         'product-name': 'count',
         'new-price': ['mean', 'std', 'sum'],
         'Release Year': 'first'
     }).reset_index()
     
-    # Flatten multi-index columns
+    # Flatten columns
     grouped.columns = ['Set Name', 'Total Cards', 
-                      'Avg Rare Value', 'Value Std Dev', 'Total Set Value',
+                      'Avg Value', 'Value Std Dev', 'Total Value',
                       'Release Year']
     
     return grouped
 
-# Main application
 def main():
-    # Load the card data
     card_data = load_card_data()
     
-    st.title("Pokémon Card Set Calculator")
-    st.write("Evaluate Pokémon card sets based on actual market data")
+    st.title("Pokémon Card Set Analyzer")
+    st.write("Compare Pokémon card sets based on market data")
 
     if not card_data.empty:
-        # Create selection options
-        set_options = card_data.to_dict('records')
-        selected_set = st.selectbox(
-            "Select a Pokémon Set",
-            options=set_options,
-            format_func=lambda x: f"{x['Set Name']} ({x['Release Year']})"
+        # Multi-select for set comparison
+        selected_sets = st.multiselect(
+            "Select sets to compare",
+            options=card_data['Set Name'].unique(),
+            default=[card_data['Set Name'].iloc[0]]
         )
-
-        st.divider()
         
-        # Display set info with new metrics
-        col1, col2, col3, col4, col5 = st.columns(5)
-        with col1:
-            st.metric("Total Cards", selected_set['Total Cards'])
-        with col2:
-            st.metric("Avg Value", f"${selected_set['Avg Rare Value']:,.2f}")
-        with col3:
-            st.metric("Value Std Dev", f"${selected_set['Value Std Dev']:,.2f}")
-        with col4:
-            st.metric("Total Set Value", f"${selected_set['Total Set Value']:,.2f}")
-        with col5:
-            st.metric("Release Year", selected_set['Release Year'])
-
-        # Calculation inputs
-        st.subheader("Investment Calculator")
-        cost = st.number_input("Cost of the Set ($)", 
-                              min_value=10, max_value=10000, 
-                              value=500, step=50)
-        pack_quantity = st.number_input("Number of Items (Packs/Boxes)", 
-                                       min_value=1, max_value=1000, 
-                                       value=36, step=1)
-
-        # Updated calculation logic using Total Set Value
-        if st.button("Calculate Potential Value"):
-            total_value = selected_set['Total Set Value']
-            potential_return = (total_value * pack_quantity) - cost
+        if selected_sets:
+            # Filter selected sets
+            comparison_data = card_data[card_data['Set Name'].isin(selected_sets)]
             
-            st.subheader("Results")
+            # Display comparison metrics
+            st.subheader("Set Comparison")
             
-            col1, col2 = st.columns(2)
-            with col1:
-                st.metric("Total Potential Value", 
-                         f"${total_value * pack_quantity:,.2f}", 
-                         delta=f"{potential_return:,.2f} Potential Return")
-            with col2:
-                roi = (potential_return / cost) * 100
-                st.metric("ROI Potential", 
-                         f"{roi:.1f}%", 
-                         delta_color="inverse" if roi < 0 else "normal")
+            # Create metrics table
+            comparison_table = comparison_data[[
+                'Set Name', 'Release Year', 'Total Cards',
+                'Avg Value', 'Value Std Dev', 'Total Value'
+            ]].copy()
+            
+            # Format currency columns
+            currency_cols = ['Avg Value', 'Value Std Dev', 'Total Value']
+            comparison_table[currency_cols] = comparison_table[currency_cols].applymap(
+                lambda x: f"${x:,.2f}" if pd.notnull(x) else "N/A"
+            )
+            
+            # Display as table with index removed
+            st.dataframe(
+                comparison_table.set_index('Set Name'),
+                use_container_width=True,
+                column_config={
+                    "Release Year": "Release Year",
+                    "Total Cards": "Total Cards",
+                    "Avg Value": "Average Value",
+                    "Value Std Dev": "Value Std Dev",
+                    "Total Value": "Total Set Value"
+                }
+            )
+            
+            # Add visual separation
+            st.divider()
+            
+            # Detailed individual set view
+            st.subheader("Set Details")
+            cols = st.columns(len(selected_sets))
+            
+            for i, (_, row) in enumerate(comparison_data.iterrows()):
+                with cols[i]:
+                    st.markdown(f"**{row['Set Name']}**")
+                    st.metric("Release Year", row['Release Year'])
+                    st.metric("Total Cards", row['Total Cards'])
+                    st.metric("Average Value", f"${row['Avg Value']:,.2f}")
+                    st.metric("Value Std Dev", f"${row['Value Std Dev']:,.2f}")
+                    st.metric("Total Set Value", f"${row['Total Value']:,.2f}")
+
+        else:
+            st.warning("Please select at least one set to compare")
 
     else:
         st.warning("No card data available. Please check your data source.")
