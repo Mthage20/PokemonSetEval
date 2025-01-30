@@ -48,3 +48,95 @@ def load_card_data():
     grouped['Set Type'] = grouped['Total_Cards'].apply(lambda x: 'Niche' if x < 10 else 'Mainstream')
     
     return grouped.rename(columns={'console-name': 'Set Name'})
+
+def calculate_final_scores(card_data):
+    card_data['Highest Potential Value'] = (
+        (card_data['Total_Value'] * 0.40) + 
+        (card_data['Avg_Value'] * 0.30) + 
+        (card_data['Value_Std_Dev'] * 0.30)
+    ).round(2)
+    
+    card_data['Safest Set to Rip'] = (
+        (card_data['Value_Std_Dev'] * 0.50) + 
+        (card_data['Avg_Value'] * 0.30) + 
+        (card_data['Total_Value'] * 0.20)
+    ).round(2)
+    
+    card_data['Best Balanced Set'] = (
+        (card_data['Total_Value'] * 0.30) + 
+        (card_data['Avg_Value'] * 0.30) + 
+        (card_data['Value_Std_Dev'] * 0.40)
+    ).round(2)
+    
+    return card_data
+
+def main():
+    if 'card_data' not in st.session_state:
+        st.session_state.card_data = load_card_data()
+        st.session_state.card_data = calculate_final_scores(st.session_state.card_data)
+    
+    card_data = st.session_state.card_data
+    
+    st.title("💰 Pokémon Set Value Analyzer")
+    st.markdown("Compare Pokémon card set investment potential based on market data")
+    
+    set_category = st.selectbox("Filter by Set Type", ['All', 'Vintage', 'Modern'])
+    set_type = st.selectbox("Filter by Set Size", ['All', 'Mainstream', 'Niche'])
+    set_language = st.selectbox("Filter by Language", ['All', 'English', 'Japanese'])
+    
+    filtered_data = card_data.copy()
+    if set_category != 'All':
+        filtered_data = filtered_data[filtered_data['Category'] == set_category]
+    if set_type != 'All':
+        filtered_data = filtered_data[filtered_data['Set Type'] == set_type]
+    if set_language != 'All':
+        filtered_data = filtered_data[filtered_data['Language'] == set_language]
+    
+    st.header("📈 Investment Leaderboards")
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.subheader("🔥 Highest Potential Value")
+        st.dataframe(
+            filtered_data[['Set Name', 'Highest Potential Value']]
+            .sort_values('Highest Potential Value', ascending=False)
+            .reset_index(drop=True)
+        )
+    
+    with col2:
+        st.subheader("🛡️ Safest Set to Rip")
+        st.dataframe(
+            filtered_data[['Set Name', 'Safest Set to Rip']]
+            .sort_values('Safest Set to Rip', ascending=False)
+            .reset_index(drop=True)
+        )
+    
+    with col3:
+        st.subheader("⚖️ Best Balanced Set")
+        st.dataframe(
+            filtered_data[['Set Name', 'Best Balanced Set']]
+            .sort_values('Best Balanced Set', ascending=False)
+            .reset_index(drop=True)
+        )
+    
+    st.divider()
+    st.header("🔍 Set Comparison Tool")
+    
+    selected_sets = st.multiselect("Select sets to compare:", filtered_data['Set Name'].unique(), placeholder="Choose 2-5 sets")
+    
+    if selected_sets:
+        compare_data = filtered_data[filtered_data['Set Name'].isin(selected_sets)]
+        st.dataframe(
+            compare_data[['Set Name', 'Total_Cards', 'Avg_Value', 'Total_Value', 
+                        'Highest Potential Value', 'Safest Set to Rip', 
+                        'Best Balanced Set']],
+            use_container_width=True,
+            column_config={
+                "Total_Cards": "Cards in Set",
+                "Avg_Value": st.column_config.NumberColumn("Avg Card Value", format="$%.2f"),
+                "Total_Value": st.column_config.NumberColumn("Total Set Value", format="$%.2f"),
+            }
+        )
+
+if __name__ == "__main__":
+    main()
