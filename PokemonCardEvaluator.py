@@ -25,6 +25,7 @@ st.header("Manual Input for Card Values")
 card_name = st.text_input("Enter Card Name (e.g., Pikachu VMAX)", "")
 card_value = st.number_input("Enter the Market Value of this Card ($)", min_value=0.0, value=hit_value, step=0.01)
 
+
 # Calculate the score and total value when the button is clicked
 if st.button("Calculate Score"):
     score = calculate_score(cost, card_value, pull_rate, pack_quantity)
