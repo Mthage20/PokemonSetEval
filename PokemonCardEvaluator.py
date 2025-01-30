@@ -48,7 +48,6 @@ def calculate_final_scores(card_data):
     
     return card_data
 
-# ... (previous imports and setup remain the same)
 
 def main():
     card_data = load_card_data()
@@ -66,45 +65,45 @@ def main():
         )
         
         if selected_sets:
-            # Filter selected sets
-            comparison_data = card_data[card_data['Set Name'].isin(selected_sets)]
+            # Reset index for reliable row identification
+            comparison_data = card_data[card_data['Set Name'].isin(selected_sets)].reset_index(drop=True)
             
-            # Identify top performers for each category
-            crown_categories = {
-                'Highest Potential Value': comparison_data['Highest Potential Value'].idxmax(),
-                'Safest Set to Rip': comparison_data['Safest Set to Rip'].idxmax(),
-                'Best Balanced Set': comparison_data['Best Balanced Set'].idxmax()
-            }
+            # Debug: Show raw data
+            st.write("Debug - Comparison Data:", comparison_data)
             
-            # Display comparison metrics
+            # Identify top performers with error handling
+            crown_categories = {}
+            try:
+                crown_categories = {
+                    'Highest Potential Value': comparison_data['Highest Potential Value'].idxmax(),
+                    'Safest Set to Rip': comparison_data['Safest Set to Rip'].idxmax(),
+                    'Best Balanced Set': comparison_data['Best Balanced Set'].idxmax()
+                }
+            except ValueError as e:
+                st.error(f"Error calculating crowns: {e}. Check if all score columns contain numeric values.")
+            
             st.subheader("Set Comparison")
             
-            # Create metrics table with crowns
-            comparison_table = comparison_data[[
-                'Set Name', 'Release Year', 'Total Cards',
-                'Avg Value', 'Value Std Dev', 'Total Value',
-                'Highest Potential Value', 'Safest Set to Rip', 'Best Balanced Set'
-            ]].copy()
+            # Create display dataframe with formatted numbers
+            display_df = comparison_data.copy()
             
-            # Add crown emoji to top performers
-            for category, idx in crown_categories.items():
-                comparison_table.loc[idx, category] = f"👑 {comparison_table.loc[idx, category]:.2f}"
-
-            # Format currency columns
+            # Format currency columns first
             currency_cols = ['Avg Value', 'Value Std Dev', 'Total Value']
-            comparison_table[currency_cols] = comparison_table[currency_cols].applymap(
-                lambda x: f"${x:,.2f}" if pd.notnull(x) else "N/A"
-            )
+            display_df[currency_cols] = display_df[currency_cols].applymap(lambda x: f"${x:,.2f}")
             
-            # Format crown categories with currency
-            crown_currency_cols = ['Highest Potential Value', 'Safest Set to Rip', 'Best Balanced Set']
-            comparison_table[crown_currency_cols] = comparison_table[crown_currency_cols].applymap(
-                lambda x: f"${float(x.replace('👑 ','')):,.2f}" if '👑' in str(x) else f"${x:,.2f}"
-            )
-            
-            # Display as table with index removed
+            # Format score columns with crowns
+            score_cols = ['Highest Potential Value', 'Safest Set to Rip', 'Best Balanced Set']
+            for col in score_cols:
+                display_df[col] = display_df[col].apply(lambda x: f"${x:,.2f}")
+                
+            # Add crowns after formatting
+            for category, idx in crown_categories.items():
+                if idx in display_df.index:
+                    display_df.loc[idx, category] = "👑 " + display_df.loc[idx, category]
+
+            # Display table with custom formatting
             st.dataframe(
-                comparison_table.set_index('Set Name'),
+                display_df.set_index('Set Name')[['Release Year', 'Total Cards'] + currency_cols + score_cols],
                 use_container_width=True,
                 column_config={
                     "Release Year": "Release Year",
@@ -112,46 +111,56 @@ def main():
                     "Avg Value": "Average Value",
                     "Value Std Dev": "Value Std Dev",
                     "Total Value": "Total Set Value",
-                    "Highest Potential Value": "Highest Potential Value",
-                    "Safest Set to Rip": "Safest Set to Rip",
-                    "Best Balanced Set": "Best Balanced Set"
+                    "Highest Potential Value": st.column_config.Column(
+                        "Highest Potential Value",
+                        help="Weighted score combining total value and variance"
+                    ),
+                    "Safest Set to Rip": st.column_config.Column(
+                        "Safest Set to Rip",
+                        help="Score emphasizing lower risk"
+                    ),
+                    "Best Balanced Set": st.column_config.Column(
+                        "Best Balanced Set",
+                        help="Balanced combination of factors"
+                    )
                 }
             )
-            
-            # Add visual separation
-            st.divider()
-            
-            # Detailed individual set view with crowns
+
+            # Detailed view with clear crowns
             st.subheader("Set Details")
             cols = st.columns(len(selected_sets))
             
-            for i, (_, row) in enumerate(comparison_data.iterrows()):
+            for i, (index, row) in enumerate(display_df.iterrows()):
                 with cols[i]:
-                    st.markdown(f"**{row['Set Name']}**")
+                    # Header with potential crown
+                    crown_str = ""
+                    if index in crown_categories.values():
+                        crown_str = " 👑"
+                    st.markdown(f"### {row['Set Name']}{crown_str}")
                     
-                    # Create crown indicators
-                    crowns = []
-                    for category in crown_categories:
-                        if crown_categories[category] == row.name:
-                            crowns.append(f"🏆 {category}")
-                    
-                    if crowns:
-                        st.markdown("**Awards:** " + " | ".join(crowns))
+                    # Metrics with conditional styling
+                    metric_kwargs = {
+                        'Highest Potential Value': {'help': 'Includes total value and variance'},
+                        'Safest Set to Rip': {'help': 'Lower risk indicator'},
+                        'Best Balanced Set': {'help': 'Balanced performance'}
+                    }
                     
                     st.metric("Release Year", row['Release Year'])
                     st.metric("Total Cards", row['Total Cards'])
-                    st.metric("Average Value", f"${row['Avg Value']:,.2f}")
-                    st.metric("Value Std Dev", f"${row['Value Std Dev']:,.2f}")
-                    st.metric("Total Set Value", f"${row['Total Value']:,.2f}")
-                    st.metric("Highest Potential Value", 
-                             f"${row['Highest Potential Value']:,.2f}",
-                             help="👑 Crowned set" if crown_categories['Highest Potential Value'] == row.name else "")
-                    st.metric("Safest Set to Rip", 
-                             f"${row['Safest Set to Rip']:,.2f}",
-                             help="👑 Crowned set" if crown_categories['Safest Set to Rip'] == row.name else "")
-                    st.metric("Best Balanced Set", 
-                             f"${row['Best Balanced Set']:,.2f}",
-                             help="👑 Crowned set" if crown_categories['Best Balanced Set'] == row.name else "")
+                    st.metric("Average Value", row['Avg Value'])
+                    st.metric("Value Std Dev", row['Value Std Dev'])
+                    st.metric("Total Set Value", row['Total Value'])
+                    
+                    # Highlight crowned metrics
+                    for score_col in score_cols:
+                        value = row[score_col]
+                        is_crowned = crown_categories.get(score_col, -1) == index
+                        st.metric(
+                            score_col,
+                            value,
+                            help="Top performer in this category" if is_crowned else "",
+                            delta="★ Crowned Set" if is_crowned else None
+                        )
 
         else:
             st.warning("Please select at least one set to compare")
