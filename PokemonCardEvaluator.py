@@ -1,27 +1,45 @@
-import streamlit as st
 import pandas as pd
+import streamlit as st
+import logging
 
-st.set_page_config(page_title="Pokémon Set Analyzer", layout="wide")
+logging.basicConfig(level=logging.INFO)
 
 def load_card_data():
     try:
         # Try to load the CSV file
         df = pd.read_csv("pricecharting_data_20250129.csv")
+        logging.info("CSV file loaded successfully.")
     except FileNotFoundError:
-        st.error("The file 'pricecharting_data_20250129.csv' was not found. Please ensure the file is in the correct directory.")
-        raise
+        logging.error("File not found. Loading sample data.")
+        df = pd.DataFrame({
+            'console-name': ['Sample Set 1', 'Sample Set 2'],
+            'new-price': [10.0, 20.0],
+            'product-name': ['Card 1', 'Card 2'],
+            'release-date': ['2020-01-01', '2021-01-01'],
+            'language': ['English', 'Japanese']
+        })
     except UnicodeDecodeError:
         try:
             df = pd.read_csv("pricecharting_data_20250129.csv", encoding='latin1')
         except Exception as e:
-            st.error(f"An error occurred while reading the file: {e}")
+            logging.error(f"Error reading file: {e}")
             raise
     
+    # Check for required columns
     required_columns = ['console-name', 'new-price', 'product-name', 'release-date', 'language']
-    if not all(col in df.columns for col in required_columns):
-        st.error("CSV is missing required columns. Using sample data.")
-        raise ValueError("Missing required columns in CSV file.")
+    missing_columns = [col for col in required_columns if col not in df.columns]
     
+    if missing_columns:
+        logging.error(f"Missing required columns: {missing_columns}. Loading sample data.")
+        df = pd.DataFrame({
+            'console-name': ['Sample Set 1', 'Sample Set 2'],
+            'new-price': [10.0, 20.0],
+            'product-name': ['Card 1', 'Card 2'],
+            'release-date': ['2020-01-01', '2021-01-01'],
+            'language': ['English', 'Japanese']
+        })
+    
+    # Process the data
     df['release-date'] = pd.to_datetime(df['release-date'], errors='coerce')
     df = df[df['release-date'].notna()]
     df['Release Year'] = df['release-date'].dt.year
