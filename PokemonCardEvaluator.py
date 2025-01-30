@@ -5,92 +5,93 @@ import os
 # Set page configuration for the app
 st.set_page_config(page_title="Pokémon Card Calculator", layout="wide")
 
-# File name for storing data
-csv_file = "sets.csv"
+# Load and process the Pokémon card data
+def load_card_data():
+    # Load the CSV data (replace with your actual CSV loading logic)
+    df = pd.read_csv("pricecharting_data_20250129.csv")
+    
+    # Clean price columns
+    price_columns = [
+        "loose-price", "cib-price", "new-price", "graded-price",
+        "box-only-price", "manual-only-price", "bgs-10-price",
+        "condition-17-price", "condition-18-price"
+    ]
+    
+    for col in price_columns:
+        df[col] = df[col].replace('[\$,]', '', regex=True).astype(float)
+    
+    # Extract release year
+    df['release-date'] = pd.to_datetime(df['release-date'])
+    df['Release Year'] = df['release-date'].dt.year
+    
+    # Group by set and calculate metrics
+    grouped = df.groupby('console-name').agg({
+        'product-name': 'count',
+        'new-price': 'mean',
+        'Release Year': 'first'
+    }).reset_index()
+    
+    grouped.columns = ['Set Name', 'Total Cards', 'Avg Rare Value', 'Release Year']
+    
+    return grouped
 
-# Load existing data (if the file exists)
-def load_sets():
-    if os.path.exists(csv_file):
-        return pd.read_csv(csv_file)
+# Main application
+def main():
+    # Load the card data
+    card_data = load_card_data()
+    
+    st.title("Pokémon Card Set Calculator")
+    st.write("Evaluate Pokémon card sets based on actual market data")
+
+    if not card_data.empty:
+        # Create selection options
+        set_options = card_data.to_dict('records')
+        selected_set = st.selectbox(
+            "Select a Pokémon Set",
+            options=set_options,
+            format_func=lambda x: f"{x['Set Name']} ({x['Release Year']})"
+        )
+
+        st.divider()
+        
+        # Display set info
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Total Cards in Set", selected_set['Total Cards'])
+        with col2:
+            st.metric("Average Card Value", f"${selected_set['Avg Rare Value']:,.2f}")
+        with col3:
+            st.metric("Release Year", selected_set['Release Year'])
+
+        # Calculation inputs
+        st.subheader("Investment Calculator")
+        cost = st.number_input("Cost of the Set ($)", 
+                              min_value=10, max_value=10000, 
+                              value=500, step=50)
+        pack_quantity = st.number_input("Number of Items (Packs/Boxes)", 
+                                       min_value=1, max_value=1000, 
+                                       value=36, step=1)
+
+        # Calculation logic
+        if st.button("Calculate Potential Value"):
+            total_value = selected_set['Avg Rare Value'] * selected_set['Total Cards']
+            potential_return = (total_value * pack_quantity) - cost
+            
+            st.subheader("Results")
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                st.metric("Total Potential Value", 
+                         f"${total_value * pack_quantity:,.2f}", 
+                         delta=f"{potential_return:,.2f} Potential Return")
+            with col2:
+                roi = (potential_return / cost) * 100
+                st.metric("ROI Potential", 
+                         f"{roi:.1f}%", 
+                         delta_color="inverse" if roi < 0 else "normal")
+
     else:
-        return pd.DataFrame(columns=["Set Name", "Release Year", "Total Cards", "Rare Card Value"])
+        st.warning("No card data available. Please check your data source.")
 
-# Save new set data to the CSV file
-def save_set(set_name, release_year, total_cards, rare_card_value):
-    df = load_sets()
-    new_set = pd.DataFrame([[set_name, release_year, total_cards, rare_card_value]],
-                           columns=["Set Name", "Release Year", "Total Cards", "Rare Card Value"])
-    df = pd.concat([df, new_set], ignore_index=True)
-    df.to_csv(csv_file, index=False)
-
-# Sidebar navigation to switch between pages
-page = st.sidebar.selectbox("Select a Page", ("Pokémon Card Set Calculator", "Enter Pokémon Set Data"))
-
-# **Pokémon Card Set Calculator Page**
-if page == "Pokémon Card Set Calculator":
-    st.title("Pokémon Card Set Score Calculator")
-    st.write("Evaluate Pokémon card sets based on cost, pull rates, and other metrics.")
-
-    # Load sets data to allow selection
-    sets_df = load_sets()
-    if sets_df.empty:
-        st.warning("No sets available. Please add a Pokémon set first.")
-    else:
-        set_options = {f"{row['Set Name']} (Released: {row['Release Year']})": row for _, row in sets_df.iterrows()}
-        selected_set_label = st.selectbox("Select a Pokémon Set", list(set_options.keys()))
-
-        # Retrieve the selected set's data
-        selected_set = set_options[selected_set_label]
-        set_name = selected_set['Set Name']
-        release_year = selected_set['Release Year']
-        total_cards = selected_set['Total Cards']
-        rare_card_value = selected_set['Rare Card Value']
-
-        st.write(f"**Selected Set:** {set_name} (Released: {release_year})")
-        st.write(f"Total Cards: {total_cards}, Avg Rare Value: ${rare_card_value:.2f}")
-
-        # Input fields for calculation
-        cost = st.number_input("Cost of the Set ($)", min_value=10, max_value=1000, value=120, step=10)
-        pull_rate = st.slider("Pull Rate (PR): Probability of pulling rare cards", min_value=0.01, max_value=1.0, value=0.1, step=0.01)
-        pack_quantity = st.number_input("Number of Packs in Set", min_value=1, max_value=100, value=36, step=1)
-
-        # Function to calculate score
-        def calculate_score(cost, hit_value, pull_rate, pack_quantity):
-            ev = hit_value * pull_rate
-            return (ev * pack_quantity) / cost
-
-        # Function to calculate total value
-        def calculate_total_value(pull_rate, hit_value, pack_quantity):
-            return pull_rate * hit_value * pack_quantity
-
-        # Calculate when button is clicked
-        if st.button("Calculate Score"):
-            score = calculate_score(cost, rare_card_value, pull_rate, pack_quantity)
-            total_value = calculate_total_value(pull_rate, rare_card_value, pack_quantity)
-
-            # Display results
-            st.success(f"📈 Calculated Score: {score:.2f}")
-            st.write(f"💰 Total Value of Rare Cards: ${total_value:.2f}")
-
-# **Enter Pokémon Set Data Page**
-elif page == "Enter Pokémon Set Data":
-    st.title("Enter Pokémon Set Data")
-
-    # Form for Data Entry
-    with st.form("set_data"):
-        set_name = st.text_input("Set Name", "")
-        release_year = st.number_input("Release Year", min_value=1996, max_value=2025, value=2024, step=1)
-        total_cards = st.number_input("Total Cards in Set", min_value=1, max_value=1000, value=200, step=1)
-        rare_card_value = st.number_input("Avg Value of Rare Cards ($)", min_value=0.0, value=10.0, step=0.01)
-
-        submit_button = st.form_submit_button("Save Data")
-
-    # Save data when the form is submitted
-    if submit_button:
-        save_set(set_name, release_year, total_cards, rare_card_value)
-        st.success(f"Saved Data for {set_name} (Released: {release_year})")
-
-    # Display all saved sets
-    st.header("Saved Sets")
-    sets_df = load_sets()
-    st.dataframe(sets_df)
+if __name__ == "__main__":
+    main()
