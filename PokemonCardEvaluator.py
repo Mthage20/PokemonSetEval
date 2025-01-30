@@ -101,27 +101,45 @@ def main():
     
     with col1:
         st.subheader("🔥 Highest Potential Value")
-        st.dataframe(
-            card_data[['Set Name', 'Highest Potential Value']]
-            .sort_values('Highest Potential Value', ascending=False)
-            .reset_index(drop=True)
+        top_hpv = card_data.sort_values('Highest Potential Value', ascending=False).iloc[0]
+        st.metric(
+            label=f"Top Set: **{top_hpv['Set Name']}**",
+            value=f"${top_hpv['Highest Potential Value']:,.2f}",
+            help=f"Total Value: ${top_hpv['Total_Value']:,.2f} | Avg Card Value: ${top_hpv['Avg_Value']:,.2f}"
         )
+        st.bar_chart(
+            card_data.set_index('Set Name')['Highest Potential Value'].head(5),
+            use_container_width=True
+        )
+        st.caption("Best for high-risk, high-reward investors. Focuses on total value and growth potential.")
     
     with col2:
         st.subheader("🛡️ Safest Set to Rip")
-        st.dataframe(
-            card_data[['Set Name', 'Safest Set to Rip']]
-            .sort_values('Safest Set to Rip', ascending=False)
-            .reset_index(drop=True)
+        top_safe = card_data.sort_values('Safest Set to Rip', ascending=False).iloc[0]
+        st.metric(
+            label=f"Top Set: **{top_safe['Set Name']}**",
+            value=f"${top_safe['Safest Set to Rip']:,.2f}",
+            help=f"Total Value: ${top_safe['Total_Value']:,.2f} | Avg Card Value: ${top_safe['Avg_Value']:,.2f}"
         )
+        st.bar_chart(
+            card_data.set_index('Set Name')['Safest Set to Rip'].head(5),
+            use_container_width=True
+        )
+        st.caption("Best for low-risk investors. Focuses on stability and consistent value.")
     
     with col3:
         st.subheader("⚖️ Best Balanced Set")
-        st.dataframe(
-            card_data[['Set Name', 'Best Balanced Set']]
-            .sort_values('Best Balanced Set', ascending=False)
-            .reset_index(drop=True)
+        top_balanced = card_data.sort_values('Best Balanced Set', ascending=False).iloc[0]
+        st.metric(
+            label=f"Top Set: **{top_balanced['Set Name']}**",
+            value=f"${top_balanced['Best Balanced Set']:,.2f}",
+            help=f"Total Value: ${top_balanced['Total_Value']:,.2f} | Avg Card Value: ${top_balanced['Avg_Value']:,.2f}"
         )
+        st.bar_chart(
+            card_data.set_index('Set Name')['Best Balanced Set'].head(5),
+            use_container_width=True
+        )
+        st.caption("Best for balanced investors. Combines growth potential and stability.")
 
     # Comparison tool
     st.divider()
