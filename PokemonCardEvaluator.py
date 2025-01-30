@@ -7,73 +7,41 @@ st.set_page_config(page_title="Pokémon Card Calculator", layout="wide")
 
 def load_card_data():
     try:
-        # Load CSV file
+        # Attempt to load user's CSV
         df = pd.read_csv("pricecharting_data_20250129.csv")
-        st.write("✅ CSV Loaded Successfully")
-
-        # Check if dataframe is empty
-        if df.empty:
-            st.error("❌ CSV file is empty! Please check the file.")
-            return pd.DataFrame()
-
-        # Show the first few rows to debug
-        st.write("📂 Raw CSV Data Preview:", df.head())
-
-        # Define price columns
-        price_columns = [
-            "loose-price", "cib-price", "new-price", "graded-price",
-            "box-only-price", "manual-only-price", "bgs-10-price",
-            "condition-17-price", "condition-18-price"
-        ]
-
-        # Clean price columns
-        for col in price_columns:
-            if col in df.columns:
-                df[col] = df[col].replace('[\$,]', '', regex=True)
-                df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
-            else:
-                st.warning(f"⚠️ Column '{col}' not found in dataset")
-
-        # Handle release dates
-        if 'release-date' in df.columns:
-            df['release-date'] = pd.to_datetime(df['release-date'], errors='coerce')
-            df = df.dropna(subset=['release-date'])
-            df['Release Year'] = df['release-date'].dt.year
-        else:
-            st.warning("⚠️ 'release-date' column missing!")
-
-        # Ensure 'console-name' exists
-        if 'console-name' not in df.columns:
-            st.error("❌ 'console-name' column is missing! Data aggregation will fail.")
-            return pd.DataFrame()
-
-        # Group by set name and aggregate values
-        grouped = df.groupby('console-name').agg(
-            Total_Cards=('product-name', 'count'),
-            Avg_Value=('new-price', 'mean'),
-            Value_Std_Dev=('new-price', 'std'),
-            Total_Value=('new-price', 'sum'),
-            Release_Year=('Release Year', 'first')
-        ).reset_index()
-
-        # Rename columns
-        grouped = grouped.rename(columns={
-            'console-name': 'Set Name',
-            'Total_Cards': 'Total Cards',
-            'Avg_Value': 'Avg Value',
-            'Value_Std_Dev': 'Value Std Dev',
-            'Total_Value': 'Total Value',
-            'Release_Year': 'Release Year'
-        })
-
-        # Show processed data
-        st.write("📊 Aggregated Data Preview:", grouped.head())
-
-        return grouped
-
-    except Exception as e:
-        st.error(f"❌ Error loading data: {e}")
-        return pd.DataFrame()
+        
+        # Validate required columns
+        required_columns = ['console-name', 'new-price', 'product-name', 'release-date']
+        if not all(col in df.columns for col in required_columns):
+            st.error("CSV is missing required columns. Using sample data.")
+            raise FileNotFoundError  # Force fallback to sample data
+            
+    except FileNotFoundError:
+        # Generate sample data if CSV is missing
+        st.warning("Using sample data. Upload your CSV for accurate results.")
+        sample_data = {
+            'console-name': ['Base Set', 'Jungle', 'Fossil'],
+            'new-price': [100.50, 75.30, 60.80],
+            'product-name': ['Charizard', 'Pikachu', 'Blastoise'],
+            'release-date': ['1999-01-01', '1999-06-01', '2000-01-01']
+        }
+        df = pd.DataFrame(sample_data)
+    
+    # Continue with existing processing code...
+    price_columns = ["new-price"]  # Simplified for example
+    for col in price_columns:
+        df[col] = pd.to_numeric(df[col], errors='coerce')
+    
+    df['release-date'] = pd.to_datetime(df['release-date'], errors='coerce')
+    grouped = df.groupby('console-name').agg(
+        Total_Cards=('product-name', 'count'),
+        Avg_Value=('new-price', 'mean'),
+        Value_Std_Dev=('new-price', 'std'),
+        Total_Value=('new-price', 'sum'),
+        Release_Year=('release-date', lambda x: x.dt.year.mode()[0])
+    ).reset_index()
+    
+    return grouped.rename(columns={'console-name': 'Set Name'})
 
 def calculate_final_scores(card_data):
     if card_data.empty:
