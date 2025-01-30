@@ -26,12 +26,13 @@ def load_card_data():
             df[col] = df[col].astype(str).str.replace(r'[^\d.]', '', regex=True)
         df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
     
-    grouped = df.groupby(['console-name', 'Category']).agg(
+    grouped = df.groupby(['console-name']).agg(
         Total_Cards=('product-name', 'count'),
         Avg_Value=('new-price', lambda x: round(x.mean(), 2)),
         Value_Std_Dev=('new-price', lambda x: round(x.std(), 2)),
         Total_Value=('new-price', 'sum'),
-        Release_Year=('Release Year', 'first')
+        Release_Year=('Release Year', 'first'),
+        Category=('Category', 'first')
     ).reset_index()
     
     return grouped.rename(columns={'console-name': 'Set Name'})
