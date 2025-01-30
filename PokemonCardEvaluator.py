@@ -8,23 +8,6 @@ pricecharting_data = pd.read_csv("pricecharting_data_20250129.csv")
 # Set page configuration for the app
 st.set_page_config(page_title="Pokémon Card Calculator", layout="wide")
 
-# File name for storing data
-csv_file = "sets.csv"
-
-# Load existing data (if the file exists)
-def load_sets():
-    if os.path.exists(csv_file):
-        return pd.read_csv(csv_file)
-    else:
-        return pd.DataFrame(columns=["Set Name", "Release Year", "Total Cards", "Rare Card Value"])
-
-# Save new set data to the CSV file
-def save_set(set_name, release_year, total_cards, rare_card_value):
-    df = load_sets()
-    new_set = pd.DataFrame([[set_name, release_year, total_cards, rare_card_value]],
-                           columns=["Set Name", "Release Year", "Total Cards", "Rare Card Value"])
-    df = pd.concat([df, new_set], ignore_index=True)
-    df.to_csv(csv_file, index=False)
 
 # Sidebar navigation to switch between pages
 page = st.sidebar.selectbox("Select a Page", ("Pokémon Card Set Calculator", "Enter Pokémon Set Data"))
@@ -115,7 +98,3 @@ elif page == "Enter Pokémon Set Data":
         save_set(set_name, release_year, total_cards, rare_card_value)
         st.success(f"Saved Data for {set_name} (Released: {release_year})")
 
-    # Display all saved sets
-    st.header("Saved Sets")
-    sets_df = load_sets()
-    st.dataframe(sets_df)
