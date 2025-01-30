@@ -1,3 +1,31 @@
+import streamlit as st
+import pandas as pd
+import os
+
+# Set page configuration for the app
+st.set_page_config(page_title="Pokémon Card Calculator", layout="wide")
+
+# File name for storing data
+csv_file = "sets.csv"
+
+# Load existing data (if the file exists)
+def load_sets():
+    if os.path.exists(csv_file):
+        return pd.read_csv(csv_file)
+    else:
+        return pd.DataFrame(columns=["Set Name", "Release Year", "Total Cards", "Rare Card Value"])
+
+# Save new set data to the CSV file
+def save_set(set_name, release_year, total_cards, rare_card_value):
+    df = load_sets()
+    new_set = pd.DataFrame([[set_name, release_year, total_cards, rare_card_value]],
+                           columns=["Set Name", "Release Year", "Total Cards", "Rare Card Value"])
+    df = pd.concat([df, new_set], ignore_index=True)
+    df.to_csv(csv_file, index=False)
+
+# Sidebar navigation to switch between pages
+page = st.sidebar.selectbox("Select a Page", ("Pokémon Card Set Calculator", "Enter Pokémon Set Data"))
+
 # **Pokémon Card Set Calculator Page**
 if page == "Pokémon Card Set Calculator":
     st.title("Pokémon Card Set Score Calculator")
