@@ -18,11 +18,7 @@ if page == "Pokémon Card Set Calculator":
     st.write("Evaluate Pokémon card sets based on cost, pull rates, and other metrics.")
 
     # Load sets data to allow selection
-    sets_df = load_sets()
-    if sets_df.empty:
-        st.warning("No sets available. Please add a Pokémon set first.")
-    else:
-        set_options = {f"{row['Set Name']} (Released: {row['Release Year']})": row for _, row in sets_df.iterrows()}
+
         selected_set_label = st.selectbox("Select a Pokémon Set", list(set_options.keys()))
 
         # Retrieve the selected set's data
