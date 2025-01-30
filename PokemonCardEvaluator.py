@@ -1,48 +1,62 @@
-import pandas as pd
 import streamlit as st
-import logging
+import pandas as pd
 
-logging.basicConfig(level=logging.INFO)
+# Set page config
+st.set_page_config(page_title="Pokémon Set Analyzer", layout="wide")
 
+# Function to load and process data
 def load_card_data():
     try:
+        # Load the CSV file
         df = pd.read_csv("pricecharting_data_20250129.csv")
     except UnicodeDecodeError:
+        # Try loading with a different encoding if needed
         df = pd.read_csv("pricecharting_data_20250129.csv", encoding='latin1')
     
-    # Updated required columns (removed 'language')
+    # Check for required columns
     required_columns = ['console-name', 'new-price', 'product-name', 'release-date']
     if not all(col in df.columns for col in required_columns):
-        st.error("CSV is missing required columns. Using sample data.")
+        st.error("CSV is missing required columns. Please ensure the file contains: 'console-name', 'new-price', 'product-name', 'release-date'.")
         raise FileNotFoundError
     
+    # Infer language from product names
+    df['Language'] = df['product-name'].apply(
+        lambda x: 'Japanese' if 'Japanese' in str(x) else 'English'
+    )
+    
+    # Convert release-date to datetime
     df['release-date'] = pd.to_datetime(df['release-date'], errors='coerce')
     df = df[df['release-date'].notna()]
     df['Release Year'] = df['release-date'].dt.year
     
+    # Categorize sets as Vintage or Modern
     df['Category'] = df['Release Year'].apply(lambda x: 'Vintage' if x < 2010 else 'Modern')
     
-    # Removed the 'Language' column logic
-    
+    # Clean and convert price columns
     price_columns = [col for col in df.columns if '-price' in col]
     for col in price_columns:
         if df[col].dtype == 'object':
             df[col] = df[col].astype(str).str.replace(r'[^\d.]', '', regex=True)
         df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
     
+    # Group data by set
     grouped = df.groupby(['console-name']).agg(
         Total_Cards=('product-name', 'count'),
         Avg_Value=('new-price', lambda x: round(x.mean(), 2)),
         Value_Std_Dev=('new-price', lambda x: round(x.std(), 2)),
         Total_Value=('new-price', 'sum'),
         Release_Year=('Release Year', 'first'),
-        Category=('Category', 'first')
+        Category=('Category', 'first'),
+        Language=('Language', 'first')  # Include inferred language
     ).reset_index()
     
+    # Categorize sets as Niche or Mainstream
     grouped['Set Type'] = grouped['Total_Cards'].apply(lambda x: 'Niche' if x < 10 else 'Mainstream')
     
+    # Rename columns for display
     return grouped.rename(columns={'console-name': 'Set Name'})
 
+# Function to calculate final scores
 def calculate_final_scores(card_data):
     card_data['Highest Potential Value'] = (
         (card_data['Total_Value'] * 0.40) + 
@@ -64,6 +78,7 @@ def calculate_final_scores(card_data):
     
     return card_data
 
+# Main function to run the app
 def main():
     if 'card_data' not in st.session_state:
         st.session_state.card_data = load_card_data()
@@ -71,13 +86,16 @@ def main():
     
     card_data = st.session_state.card_data
     
+    # App title and description
     st.title("💰 Pokémon Set Value Analyzer")
     st.markdown("Compare Pokémon card set investment potential based on market data")
     
+    # Filters
     set_category = st.selectbox("Filter by Set Type", ['All', 'Vintage', 'Modern'])
     set_type = st.selectbox("Filter by Set Size", ['All', 'Mainstream', 'Niche'])
     set_language = st.selectbox("Filter by Language", ['All', 'English', 'Japanese'])
     
+    # Apply filters
     filtered_data = card_data.copy()
     if set_category != 'All':
         filtered_data = filtered_data[filtered_data['Category'] == set_category]
@@ -86,6 +104,7 @@ def main():
     if set_language != 'All':
         filtered_data = filtered_data[filtered_data['Language'] == set_language]
     
+    # Display leaderboards
     st.header("📈 Investment Leaderboards")
     col1, col2, col3 = st.columns(3)
     
@@ -113,10 +132,15 @@ def main():
             .reset_index(drop=True)
         )
     
+    # Set comparison tool
     st.divider()
     st.header("🔍 Set Comparison Tool")
     
-    selected_sets = st.multiselect("Select sets to compare:", filtered_data['Set Name'].unique(), placeholder="Choose 2-5 sets")
+    selected_sets = st.multiselect(
+        "Select sets to compare:", 
+        filtered_data['Set Name'].unique(), 
+        placeholder="Choose 2-5 sets"
+    )
     
     if selected_sets:
         compare_data = filtered_data[filtered_data['Set Name'].isin(selected_sets)]
@@ -132,5 +156,6 @@ def main():
             }
         )
 
+# Run the app
 if __name__ == "__main__":
     main()
