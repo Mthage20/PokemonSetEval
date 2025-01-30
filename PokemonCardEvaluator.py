@@ -9,7 +9,7 @@ def load_card_data():
     except UnicodeDecodeError:
         df = pd.read_csv("pricecharting_data_20250129.csv", encoding='latin1')
     
-    required_columns = ['console-name', 'new-price', 'product-name', 'release-date']
+    required_columns = ['console-name', 'new-price', 'product-name', 'release-date', 'language']
     if not all(col in df.columns for col in required_columns):
         st.error("CSV is missing required columns. Using sample data.")
         raise FileNotFoundError
@@ -19,6 +19,7 @@ def load_card_data():
     df['Release Year'] = df['release-date'].dt.year
     
     df['Category'] = df['Release Year'].apply(lambda x: 'Vintage' if x < 2010 else 'Modern')
+    df['Language'] = df['language'].apply(lambda x: 'English' if 'English' in x else 'Japanese')
     
     price_columns = [col for col in df.columns if '-price' in col]
     for col in price_columns:
@@ -32,7 +33,8 @@ def load_card_data():
         Value_Std_Dev=('new-price', lambda x: round(x.std(), 2)),
         Total_Value=('new-price', 'sum'),
         Release_Year=('Release Year', 'first'),
-        Category=('Category', 'first')
+        Category=('Category', 'first'),
+        Language=('Language', 'first')
     ).reset_index()
     
     grouped['Set Type'] = grouped['Total_Cards'].apply(lambda x: 'Niche' if x < 10 else 'Mainstream')
@@ -70,10 +72,17 @@ def main():
     st.title("💰 Pokémon Set Value Analyzer")
     st.markdown("Compare Pokémon card set investment potential based on market data")
     
-    set_category = st.radio("Select Set Type", ('Vintage', 'Modern'))
-    set_type = st.radio("Select Set Size", ('Mainstream', 'Niche'))
+    set_category = st.selectbox("Filter by Set Type", ['All', 'Vintage', 'Modern'])
+    set_type = st.selectbox("Filter by Set Size", ['All', 'Mainstream', 'Niche'])
+    set_language = st.selectbox("Filter by Language", ['All', 'English', 'Japanese'])
     
-    filtered_data = card_data[(card_data['Category'] == set_category) & (card_data['Set Type'] == set_type)]
+    filtered_data = card_data.copy()
+    if set_category != 'All':
+        filtered_data = filtered_data[filtered_data['Category'] == set_category]
+    if set_type != 'All':
+        filtered_data = filtered_data[filtered_data['Set Type'] == set_type]
+    if set_language != 'All':
+        filtered_data = filtered_data[filtered_data['Language'] == set_language]
     
     st.header("📈 Investment Leaderboards")
     col1, col2, col3 = st.columns(3)
