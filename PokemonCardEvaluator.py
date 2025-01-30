@@ -55,6 +55,9 @@ if page == "Pokémon Card Set Calculator":
         # Filter pricecharting data based on the selected set
         filtered_data = pricecharting_data[pricecharting_data['console-name'].str.contains(set_name, case=False, na=False)]
         
+        # Ensure the 'new-price' column is numeric (coerce any non-numeric values to NaN)
+        filtered_data['new-price'] = pd.to_numeric(filtered_data['new-price'], errors='coerce')
+
         if not filtered_data.empty:
             avg_rare_value = filtered_data['new-price'].mean()
             st.write(f"Average Rare Card Value from Pricecharting Data: ${avg_rare_value:.2f}")
