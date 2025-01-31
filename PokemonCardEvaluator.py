@@ -183,10 +183,15 @@ def main():
                 border-left: 5px solid #4CAF50;
                 margin: 10px 0;
                 position: relative;
+                color: #2c3e50; /* Ensure text is visible */
             }
             .winner-card h3 {
                 color: #2c3e50;
                 margin-top: 0;
+            }
+            .winner-card p {
+                color: #2c3e50;
+                margin: 0;
             }
             .winner-card::after {
                 content: '🏆';
