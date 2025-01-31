@@ -163,6 +163,9 @@ def main():
                 "Avg_Value": st.column_config.NumberColumn("Avg Card Value", format="$%.2f"),
                 "Value_Std_Dev": st.column_config.NumberColumn("Std Dev", format="$%.2f"),
                 "Total_Value": st.column_config.NumberColumn("Total Set Value", format="$%.2f"),
+                "Highest Potential Value Rank": "Rank (HPV)",
+                "Safest Set to Rip Rank": "Rank (SSR)",
+                "Best Balanced Set Rank": "Rank (BBS)",
             }
         )
 
@@ -210,6 +213,13 @@ def main():
                     <p>Score: {winner_hpv.iloc[0]['Highest Potential Value']}</p>
                 </div>
                 """, unsafe_allow_html=True)
+            else:
+                st.markdown(f"""
+                <div class="winner-card">
+                    <h3>🔥 Highest Potential Value</h3>
+                    <p><em>No winner found</em></p>
+                </div>
+                """, unsafe_allow_html=True)
 
         # Safest Set to Rip Winner
         with col2:
@@ -222,6 +232,13 @@ def main():
                     <p>Score: {winner_ssr.iloc[0]['Safest Set to Rip']}</p>
                 </div>
                 """, unsafe_allow_html=True)
+            else:
+                st.markdown(f"""
+                <div class="winner-card">
+                    <h3>🛡️ Safest Set to Rip</h3>
+                    <p><em>No winner found</em></p>
+                </div>
+                """, unsafe_allow_html=True)
 
         # Best Balanced Set Winner
         with col3:
@@ -232,6 +249,13 @@ def main():
                     <h3>⚖️ Best Balanced Set</h3>
                     <p><strong>{winner_bbs.iloc[0]['Set Name']}</strong></p>
                     <p>Score: {winner_bbs.iloc[0]['Best Balanced Set']}</p>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.markdown(f"""
+                <div class="winner-card">
+                    <h3>⚖️ Best Balanced Set</h3>
+                    <p><em>No winner found</em></p>
                 </div>
                 """, unsafe_allow_html=True)
 
