@@ -166,6 +166,75 @@ def main():
             }
         )
 
+        # --- WINNER SECTION ---
+        st.divider()
+        st.header("🏆 Category Winners (Selected Sets)")
+
+        # Add custom CSS for winner cards
+        st.markdown("""
+        <style>
+            .winner-card {
+                padding: 20px;
+                border-radius: 10px;
+                background: #f8f9fa;
+                border-left: 5px solid #4CAF50;
+                margin: 10px 0;
+                position: relative;
+            }
+            .winner-card h3 {
+                color: #2c3e50;
+                margin-top: 0;
+            }
+            .winner-card::after {
+                content: '🏆';
+                position: absolute;
+                right: 15px;
+                top: 15px;
+                font-size: 24px;
+                opacity: 0.3;
+            }
+        </style>
+        """, unsafe_allow_html=True)
+
+        # Create columns for winners
+        col1, col2, col3 = st.columns(3)
+        
+        # Highest Potential Value Winner
+        with col1:
+            winner_hpv = compare_data.nlargest(1, 'Highest Potential Value')
+            if not winner_hpv.empty:
+                st.markdown(f"""
+                <div class="winner-card">
+                    <h3>🔥 Highest Potential Value</h3>
+                    <p><strong>{winner_hpv.iloc[0]['Set Name']}</strong></p>
+                    <p>Score: {winner_hpv.iloc[0]['Highest Potential Value']}</p>
+                </div>
+                """, unsafe_allow_html=True)
+
+        # Safest Set to Rip Winner
+        with col2:
+            winner_ssr = compare_data.nlargest(1, 'Safest Set to Rip')
+            if not winner_ssr.empty:
+                st.markdown(f"""
+                <div class="winner-card">
+                    <h3>🛡️ Safest Set to Rip</h3>
+                    <p><strong>{winner_ssr.iloc[0]['Set Name']}</strong></p>
+                    <p>Score: {winner_ssr.iloc[0]['Safest Set to Rip']}</p>
+                </div>
+                """, unsafe_allow_html=True)
+
+        # Best Balanced Set Winner
+        with col3:
+            winner_bbs = compare_data.nlargest(1, 'Best Balanced Set')
+            if not winner_bbs.empty:
+                st.markdown(f"""
+                <div class="winner-card">
+                    <h3>⚖️ Best Balanced Set</h3>
+                    <p><strong>{winner_bbs.iloc[0]['Set Name']}</strong></p>
+                    <p>Score: {winner_bbs.iloc[0]['Best Balanced Set']}</p>
+                </div>
+                """, unsafe_allow_html=True)
+
 # Run the app
 if __name__ == "__main__":
     main()
