@@ -143,14 +143,15 @@ def main():
     )
     
     if selected_sets:
+        # Calculate ranks relative to all filtered sets
+        filtered_data['Highest Potential Value Rank'] = filtered_data['Highest Potential Value'].rank(ascending=False, method='min').astype(int)
+        filtered_data['Safest Set to Rip Rank'] = filtered_data['Safest Set to Rip'].rank(ascending=False, method='min').astype(int)
+        filtered_data['Best Balanced Set Rank'] = filtered_data['Best Balanced Set'].rank(ascending=False, method='min').astype(int)
+        
+        # Filter the selected sets
         compare_data = filtered_data[filtered_data['Set Name'].isin(selected_sets)].copy()
         
-        # Calculate ranks for each category
-        compare_data['Highest Potential Value Rank'] = compare_data['Highest Potential Value'].rank(ascending=False, method='min').astype(int)
-        compare_data['Safest Set to Rip Rank'] = compare_data['Safest Set to Rip'].rank(ascending=False, method='min').astype(int)
-        compare_data['Best Balanced Set Rank'] = compare_data['Best Balanced Set'].rank(ascending=False, method='min').astype(int)
-        
-        # Display comparison table with ranks and key metrics (no category values)
+        # Display comparison table with ranks and key metrics
         st.dataframe(
             compare_data[['Set Name', 'Total_Cards', 'Avg_Value', 'Value_Std_Dev', 'Total_Value', 
                         'Highest Potential Value Rank',
