@@ -142,112 +142,118 @@ def main():
         placeholder="Choose 2-5 sets"
     )
     
-    if selected_sets:
-        # Calculate ranks relative to all filtered sets
-        filtered_data['Highest Potential Value Rank'] = (
-            filtered_data['Highest Potential Value']
-            .rank(ascending=False, method='min', na_option='keep')
-            .fillna(9999)  # Replace NaN with a placeholder
-            .astype(int)   # Cast to integer
-            .replace(9999, pd.NA)  # Replace placeholder back with NaN
-        )
-        
-        filtered_data['Safest Set to Rip Rank'] = (
-            filtered_data['Safest Set to Rip']
-            .rank(ascending=False, method='min', na_option='keep')
-            .fillna(9999)  # Replace NaN with a placeholder
-            .astype(int)   # Cast to integer
-            .replace(9999, pd.NA)  # Replace placeholder back with NaN
-        )
-        
-        filtered_data['Best Balanced Set Rank'] = (
-            filtered_data['Best Balanced Set']
-            .rank(ascending=False, method='min', na_option='keep')
-            .fillna(9999)  # Replace NaN with a placeholder
-            .astype(int)   # Cast to integer
-            .replace(9999, pd.NA)  # Replace placeholder back with NaN
-        )
-        
-        # Filter the selected sets
-        compare_data = filtered_data[filtered_data['Set Name'].isin(selected_sets)].copy()
-        
-        # Display comparison table with ranks and key metrics
-        st.dataframe(
-            compare_data[['Set Name', 'Total_Cards', 'Avg_Value', 'Value_Std_Dev', 'Total_Value', 
-                        'Highest Potential Value Rank',
-                        'Safest Set to Rip Rank',
-                        'Best Balanced Set Rank']],
-            use_container_width=True,
-            column_config={
-                "Total_Cards": "Cards in Set",
-                "Avg_Value": st.column_config.NumberColumn("Avg Card Value", format="$%.2f"),
-                "Value_Std_Dev": st.column_config.NumberColumn("Std Dev", format="$%.2f"),
-                "Total_Value": st.column_config.NumberColumn("Total Set Value", format="$%.2f"),
-                "Highest Potential Value Rank": "Rank (HPV)",
-                "Safest Set to Rip Rank": "Rank (SSR)",
-                "Best Balanced Set Rank": "Rank (BBS)",
-            }
-        )
+   # ... (keep all your existing code up to the comparison tool section)
 
-        # --- WINNER SECTION ---
-        st.divider()
-        st.header("🏆 Category Winners (Selected Sets)")
+if selected_sets:
+    # Calculate ranks relative to all filtered sets
+    filtered_data['Highest Potential Value Rank'] = (
+        filtered_data['Highest Potential Value']
+        .rank(ascending=False, method='min', na_option='keep')
+        .fillna(9999)  # Replace NaN with a placeholder
+        .astype(int)   # Cast to integer
+        .replace(9999, pd.NA)  # Replace placeholder back with NaN
+    )
+    
+    filtered_data['Safest Set to Rip Rank'] = (
+        filtered_data['Safest Set to Rip']
+        .rank(ascending=False, method='min', na_option='keep')
+        .fillna(9999)  # Replace NaN with a placeholder
+        .astype(int)   # Cast to integer
+        .replace(9999, pd.NA)  # Replace placeholder back with NaN
+    )
+    
+    filtered_data['Best Balanced Set Rank'] = (
+        filtered_data['Best Balanced Set']
+        .rank(ascending=False, method='min', na_option='keep')
+        .fillna(9999)  # Replace NaN with a placeholder
+        .astype(int)   # Cast to integer
+        .replace(9999, pd.NA)  # Replace placeholder back with NaN
+    )
+    
+    # Filter the selected sets
+    compare_data = filtered_data[filtered_data['Set Name'].isin(selected_sets)].copy()
+    
+    # Display comparison table with ranks and key metrics
+    st.dataframe(
+        compare_data[['Set Name', 'Total_Cards', 'Avg_Value', 'Value_Std_Dev', 'Total_Value', 
+                    'Highest Potential Value Rank',
+                    'Safest Set to Rip Rank',
+                    'Best Balanced Set Rank']],
+        use_container_width=True,
+        column_config={
+            "Total_Cards": "Cards in Set",
+            "Avg_Value": st.column_config.NumberColumn("Avg Card Value", format="$%.2f"),
+            "Value_Std_Dev": st.column_config.NumberColumn("Std Dev", format="$%.2f"),
+            "Total_Value": st.column_config.NumberColumn("Total Set Value", format="$%.2f"),
+            "Highest Potential Value Rank": "Rank (HPV)",
+            "Safest Set to Rip Rank": "Rank (SSR)",
+            "Best Balanced Set Rank": "Rank (BBS)",
+        }
+    )
 
-        # Add custom CSS for winner cards
-        st.markdown("""
-        <style>
-            .winner-card {
-                padding: 20px;
-                border-radius: 10px;
-                background: #f8f9fa;
-                border-left: 5px solid #4CAF50;
-                margin: 10px 0;
-                position: relative;
-                color: #2c3e50;
-            }
-            .winner-card h3 {
-                margin-top: 0;
-            }
-            .winner-card::after {
-                content: '🏆';
-                position: absolute;
-                right: 15px;
-                top: 15px;
-                font-size: 24px;
-                opacity: 0.3;
-            }
-        </style>
-        """, unsafe_allow_html=True)
+    # --- WINNER SECTION ---
+    st.divider()
+    st.header("🏆 Category Winners (Selected Sets)")
 
-        # Create columns for winners
-        col1, col2, col3 = st.columns(3)
+    # Add custom CSS for winner cards
+    st.markdown("""
+    <style>
+        .winner-card {
+            padding: 20px;
+            border-radius: 10px;
+            background: #f8f9fa;
+            border-left: 5px solid #4CAF50;
+            margin: 10px 0;
+            position: relative;
+            color: #2c3e50;
+        }
+        .winner-card h3 {
+            margin-top: 0;
+        }
+        .winner-card::after {
+            content: '🏆';
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            font-size: 24px;
+            opacity: 0.3;
+        }
+    </style>
+    """, unsafe_allow_html=True)
 
-        # Function to display a winner card
-        def display_winner(column, title, score_column):
-            with column:
-                # Find the top-performing set in the filtered data
-                winner = filtered_data.nlargest(1, score_column)
-                # Check if the winner is among the selected sets
-                if not winner.empty and winner.iloc[0]['Set Name'] in selected_sets:
-                    st.markdown(f"""
-                    <div class="winner-card">
-                        <h3>{title}</h3>
-                        <p><strong>{winner.iloc[0]['Set Name']}</strong></p>
-                        <p>Score: {winner.iloc[0][score_column]}</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                else:
-                    st.markdown(f"""
-                    <div class="winner-card">
-                        <h3>{title}</h3>
-                        <p><em>No winner found</em></p>
-                    </div>
-                    """, unsafe_allow_html=True)
+    # Create columns for winners
+    col1, col2, col3 = st.columns(3)
 
-        # Display winners
-        display_winner(col1, "🔥 Highest Potential Value", "Highest Potential Value")
-        display_winner(col2, "🛡️ Safest Set to Rip", "Safest Set to Rip")
-        display_winner(col3, "⚖️ Best Balanced Set", "Best Balanced Set")
+    # Function to display a winner card
+    def display_winner(column, title, score_column):
+        with column:
+            # Find the top-performing set in the filtered data
+            winner = filtered_data.nlargest(1, score_column)
+            st.write(f"Debug - {title} Winner:", winner)  # Debugging print
+            st.write(f"Debug - Selected Sets:", selected_sets)  # Debugging print
+            # Check if the winner is among the selected sets
+            if not winner.empty and winner.iloc[0]['Set Name'] in selected_sets:
+                st.markdown(f"""
+                <div class="winner-card">
+                    <h3>{title}</h3>
+                    <p><strong>{winner.iloc[0]['Set Name']}</strong></p>
+                    <p>Score: {winner.iloc[0][score_column]}</p>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.markdown(f"""
+                <div class="winner-card">
+                    <h3>{title}</h3>
+                    <p><em>No winner found</em></p>
+                </div>
+                """, unsafe_allow_html=True)
+
+    # Display winners
+    display_winner(col1, "🔥 Highest Potential Value", "Highest Potential Value")
+    display_winner(col2, "🛡️ Safest Set to Rip", "Safest Set to Rip")
+    display_winner(col3, "⚖️ Best Balanced Set", "Best Balanced Set")
+
+# ... (keep the rest of your existing code)
 
 # Run the app
 if __name__ == "__main__":
