@@ -104,6 +104,10 @@ def main():
     if set_language != 'All':
         filtered_data = filtered_data[filtered_data['Language'] == set_language]
     
+    # Debug: Print filtered data
+    st.write("### Filtered Data (After Applying Filters)")
+    st.write(filtered_data)
+    
     # Display leaderboards
     st.header("📈 Investment Leaderboards")
     col1, col2, col3 = st.columns(3)
@@ -169,8 +173,16 @@ def main():
             .replace(9999, pd.NA)  # Replace placeholder back with NaN
         )
         
+        # Debug: Print filtered data with ranks
+        st.write("### Filtered Data with Ranks")
+        st.write(filtered_data[['Set Name', 'Highest Potential Value Rank', 'Safest Set to Rip Rank', 'Best Balanced Set Rank']])
+        
         # Filter the selected sets
         compare_data = filtered_data[filtered_data['Set Name'].isin(selected_sets)].copy()
+        
+        # Debug: Print comparison data
+        st.write("### Comparison Data (Selected Sets)")
+        st.write(compare_data[['Set Name', 'Highest Potential Value Rank', 'Safest Set to Rip Rank', 'Best Balanced Set Rank']])
         
         # Display comparison table with ranks and key metrics
         st.dataframe(
