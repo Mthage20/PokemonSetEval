@@ -146,10 +146,10 @@ def main():
         placeholder="Choose 2-5 sets"
     )
     
-   if selected_sets:
+    if selected_sets:
     # Calculate ranks relative to all filtered sets
     # Ensure ranks are calculated independently for each category
-    filtered_data['Highest Potential Value Rank'] = (
+        filtered_data['Highest Potential Value Rank'] = (
         filtered_data['Highest Potential Value']
         .rank(ascending=False, method='min', na_option='keep')
         .fillna(9999)  # Replace NaN with a placeholder
