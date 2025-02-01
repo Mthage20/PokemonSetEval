@@ -148,10 +148,10 @@ def main():
     # Calculate ranks relative to all filtered sets
         filtered_data['Highest Potential Value Rank'] = (
         filtered_data['Highest Potential Value']
-        .rank(ascending=False, method='min', na_option='keep')
-        .fillna(9999)  # Replace NaN with a placeholder
-        .astype(int)   # Cast to integer
-        .replace(9999, pd.NA)  # Replace placeholder back with NaN
+            .rank(ascending=False, method='min', na_option='keep')
+            .fillna(9999)  # Replace NaN with a placeholder
+            .astype(int)   # Cast to integer
+            .replace(9999, pd.NA)  # Replace placeholder back with NaN
     )
     
     filtered_data['Safest Set to Rip Rank'] = (
