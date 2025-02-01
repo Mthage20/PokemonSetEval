@@ -144,9 +144,9 @@ def main():
     
    # ... (keep all your existing code up to the comparison tool section)
 
-if selected_sets:
+    if selected_sets:
     # Calculate ranks relative to all filtered sets
-    filtered_data['Highest Potential Value Rank'] = (
+        filtered_data['Highest Potential Value Rank'] = (
         filtered_data['Highest Potential Value']
         .rank(ascending=False, method='min', na_option='keep')
         .fillna(9999)  # Replace NaN with a placeholder
