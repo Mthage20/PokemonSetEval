@@ -203,10 +203,15 @@ def main():
                 border-left: 5px solid #4CAF50;
                 margin: 10px 0;
                 position: relative;
-                color: #2c3e50;
+                color: #2c3e50; /* Ensure text is visible */
             }
             .winner-card h3 {
+                color: #2c3e50;
                 margin-top: 0;
+            }
+            .winner-card p {
+                color: #2c3e50;
+                margin: 0;
             }
             .winner-card::after {
                 content: '🏆';
@@ -221,30 +226,63 @@ def main():
 
         # Create columns for winners
         col1, col2, col3 = st.columns(3)
+        
+        # Highest Potential Value Winner
+        with col1:
+            winner_hpv = filtered_data.nlargest(1, 'Highest Potential Value')
+            if not winner_hpv.empty and winner_hpv.iloc[0]['Set Name'] in selected_sets:
+                st.markdown(f"""
+                <div class="winner-card">
+                    <h3>🔥 Highest Potential Value</h3>
+                    <p><strong>{winner_hpv.iloc[0]['Set Name']}</strong></p>
+                    <p>Score: {winner_hpv.iloc[0]['Highest Potential Value']}</p>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.markdown(f"""
+                <div class="winner-card">
+                    <h3>🔥 Highest Potential Value</h3>
+                    <p><em>No winner found</em></p>
+                </div>
+                """, unsafe_allow_html=True)
 
-        def display_winner(column, title, score_column):
-            with column:
-                winner = filtered_data.nlargest(1, score_column)
-                if not winner.empty and winner.iloc[0]['Set Name'] in selected_sets:
-                    st.markdown(f"""
-                    <div class="winner-card">
-                        <h3>{title}</h3>
-                        <p><strong>{winner.iloc[0]['Set Name']}</strong></p>
-                        <p>Score: {winner.iloc[0][score_column]}</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                else:
-                    st.markdown(f"""
-                    <div class="winner-card">
-                        <h3>{title}</h3>
-                        <p><em>No winner found</em></p>
-                    </div>
-                    """, unsafe_allow_html=True)
+        # Safest Set to Rip Winner
+        with col2:
+            winner_ssr = filtered_data.nlargest(1, 'Safest Set to Rip')
+            if not winner_ssr.empty and winner_ssr.iloc[0]['Set Name'] in selected_sets:
+                st.markdown(f"""
+                <div class="winner-card">
+                    <h3>🛡️ Safest Set to Rip</h3>
+                    <p><strong>{winner_ssr.iloc[0]['Set Name']}</strong></p>
+                    <p>Score: {winner_ssr.iloc[0]['Safest Set to Rip']}</p>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.markdown(f"""
+                <div class="winner-card">
+                    <h3>🛡️ Safest Set to Rip</h3>
+                    <p><em>No winner found</em></p>
+                </div>
+                """, unsafe_allow_html=True)
 
-        # Display winners
-        display_winner(col1, "🔥 Highest Potential Value", "Highest Potential Value")
-        display_winner(col2, "🛡️ Safest Set to Rip", "Safest Set to Rip")
-        display_winner(col3, "⚖️ Best Balanced Set", "Best Balanced Set")
+        # Best Balanced Set Winner
+        with col3:
+            winner_bbs = filtered_data.nlargest(1, 'Best Balanced Set')
+            if not winner_bbs.empty and winner_bbs.iloc[0]['Set Name'] in selected_sets:
+                st.markdown(f"""
+                <div class="winner-card">
+                    <h3>⚖️ Best Balanced Set</h3>
+                    <p><strong>{winner_bbs.iloc[0]['Set Name']}</strong></p>
+                    <p>Score: {winner_bbs.iloc[0]['Best Balanced Set']}</p>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.markdown(f"""
+                <div class="winner-card">
+                    <h3>⚖️ Best Balanced Set</h3>
+                    <p><em>No winner found</em></p>
+                </div>
+                """, unsafe_allow_html=True)
 
 # Run the app
 if __name__ == "__main__":
